@@ -79,8 +79,8 @@ class Router extends Component {
             {this.props.dim ? <div className="dimm" style={dimStyle} onClick={Dimmer.trigger}></div>:null}
                 <Page
                     style={style}
-                    location={this.props.pageContext.getHistory().currentLocation(false)}
-                    options={this.props.pageContext.getHistory().currentLocation(true).options}
+                    pageContext={this.props.pageContext}
+                    options={this.props.pageContext.getCurrentOptions()}
                     history={this.props.pageContext.getHistory()}
                     small={small}
                     isEditing={this.props.isEditing}

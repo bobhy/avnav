@@ -29,6 +29,9 @@ export default class PageContext{
         let location=this.history.currentLocation();
         return getPageForName(location,this.isMain);
     }
+    getCurrentOptions(){
+        return this.history.currentLocation(true).options;
+    }
     canShowPage(name){
         if (this.isMain) return true;
         return allowInSecond(name);

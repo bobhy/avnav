@@ -118,6 +118,7 @@ class Page extends React.Component {
 Page.pageProperties={
     className: PropTypes.string,
     style: PropTypes.object,
+    pageContext: PropTypes.object, //PageContext,
     options: PropTypes.object,
     location: PropTypes.string.isRequired,
     history: PropTypes.object.isRequired,
