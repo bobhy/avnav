@@ -1,36 +1,20 @@
 //avnav (C) wellenvogel 2019
 
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import History from './util/history.js';
 import Dynamic from './hoc/Dynamic.jsx';
-import keys,{KeyHelper} from './util/keys.jsx';
+import keys from './util/keys.jsx';
 import MainPage from './gui/MainPage.jsx';
-import InfoPage from './gui/InfoPage.jsx';
-import GpsPage from './gui/GpsPage.jsx';
-import AisPage from './gui/AisPage.jsx';
-import AisInfoPage from './gui/AisInfoPage.jsx';
-import AddOnPage from './gui/AddOnPage.jsx';
-import AddressPage from './gui/AddressPage.jsx';
-import StatusPage from './gui/StatusPage.jsx';
-import WpaPage from './gui/WpaPage.jsx';
-import RoutePage from './gui/RoutePage.jsx';
-import DownloadPage from './gui/DownloadPage.jsx';
-import SettingsPage from './gui/SettingsPage.jsx';
-import NavPage from './gui/NavPage.jsx';
-import EditRoutePage from './gui/EditRoutePage.jsx';
-import WarningPage from './gui/WarningPage.jsx';
-import ViewPage from './gui/ViewPage.jsx';
-import AddonConfigPage from './gui/AddOnConfigPage.jsx';
-import PropertyHandler from './util/propertyhandler.js';
 import OverlayDialog from './components/OverlayDialog.jsx';
 import globalStore from './util/globalstore.jsx';
 import Requests from './util/requests.js';
 import SoundHandler from './components/SoundHandler.jsx';
-import Toast,{ToastDisplay} from './components/Toast.jsx';
+import Toast, {ToastDisplay} from './components/Toast.jsx';
 import KeyHandler from './util/keyhandler.js';
 import LayoutHandler from './util/layouthandler.js';
 import assign from 'object-assign';
-import AlarmHandler, {LOCAL_TYPES} from './nav/alarmhandler.js';
+import AlarmHandler from './nav/alarmhandler.js';
+import alarmhandler, {LOCAL_TYPES} from './nav/alarmhandler.js';
 import GuiHelpers, {stateHelper} from './util/GuiHelpers.js';
 import Mob from './components/Mob.js';
 import Dimmer from './util/dimhandler.js';
@@ -43,7 +27,8 @@ import base from "./base";
 import propertyHandler from "./util/propertyhandler";
 import MapHolder from "./map/mapholder";
 import NavData from './nav/navdata';
-import alarmhandler from "./nav/alarmhandler.js";
+import {getPageForName} from "./gui/PageList";
+import PageContext from "./gui/PageContext";
 
 
 const DynamicSound=Dynamic(SoundHandler);
@@ -74,42 +59,13 @@ class Other extends React.Component{
 }
 
 
-class MainWrapper extends React.Component{
-    constructor(props){
-        super(props);
-    }
-    render(){
-        return <MainPage {...this.props}/>
-    }
-    componentDidMount(){
-        this.props.history.reset(); //reset history if we reach the mainpage
-    }
-}
-const pages={
-    mainpage: MainWrapper,
-    infopage: InfoPage,
-    gpspage: GpsPage,
-    aispage: AisPage,
-    aisinfopage:AisInfoPage,
-    addonpage:AddOnPage,
-    addresspage:AddressPage,
-    statuspage:StatusPage,
-    wpapage:WpaPage,
-    routepage:RoutePage,
-    downloadpage:DownloadPage,
-    settingspage:SettingsPage,
-    navpage: NavPage,
-    editroutepage:EditRoutePage,
-    warningpage:WarningPage,
-    viewpage:ViewPage,
-    addonconfigpage: AddonConfigPage
-};
+
 class Router extends Component {
     constructor(props) {
         super(props);
     }
     render() {
-        let Page=pages[this.props.location];
+        let Page=getPageForName(this.props.location);
         if (Page === undefined){
             Page=Other;
         }
@@ -154,10 +110,10 @@ class App extends React.Component {
         this.checkSizes=this.checkSizes.bind(this);
         this.keyDown=this.keyDown.bind(this);
         this.state={
-            error:0
+            error:0,
+            left: 1,
+            right: 1
         };
-        this.history=new History();
-        this.rightHistory=new History();
         this.buttonSizer=null;
         globalStore.storeData(keys.gui.global.onAndroid,false,true);
         //make the android API available as avnav.android
@@ -205,12 +161,10 @@ class App extends React.Component {
         if (firstStart){
             propertyHandler.firstStart();
         }
-        this.history.push(startpage);
-        this.rightHistory.push(startpage);
-        this.leftHistoryState=stateHelper(this,this.history.currentLocation(true),'leftHistory');
-        this.rightHistoryState=stateHelper(this,this.rightHistory.currentLocation(true),'rightHistory');
-        this.history.setCallback((topEntry)=>this.leftHistoryState.setState(topEntry,true));
-        this.rightHistory.setCallback((topEntry)=>this.rightHistoryState.setState(topEntry,true));
+        this.leftContext=new PageContext(true,startpage);
+        this.rightContext=new PageContext(false,'mainpage');
+        this.leftContext.setCallback(()=>this.setState((prev,props)=>{return {left: prev.left+1}}));
+        this.rightContext.setCallback(()=>this.setState((prev,props)=>{return {right: prev.right+1}}))
         Requests.getJson("/user/viewer/images.json",{useNavUrl:false,checkOk:false})
             .then((data)=>{
                 MapHolder.setImageStyles(data);
@@ -395,9 +349,9 @@ class App extends React.Component {
                 isEditing:keys.gui.global.layoutEditing
                 },keys.gui.capabilities)
             }
-                location={this.leftHistoryState.getValue('location')}
-                options={this.leftHistoryState.getValue('options')}
-                history={this.history}
+                location={this.leftContext.getHistory().currentLocation(false)}
+                options={this.leftContext.getHistory().currentLocation(true).options}
+                history={this.leftContext.getHistory()}
                 nightMode={this.props.nightMode}
                 />
             <Dialogs
