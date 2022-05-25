@@ -3,9 +3,9 @@ const REMOTE_CMD=COMMANDS.setPage;
 import assign from 'object-assign'
 
 class History{
-    constructor(callback,startlocation,startoptions){
+    constructor(checkFunction){
         this.history=[];
-        this.callback=callback;
+        this.callback=undefined;
         this.pop=this.pop.bind(this);
         this.push=this.push.bind(this);
         this.updateCallback=this.updateCallback.bind(this);
@@ -13,19 +13,24 @@ class History{
         this.replace=this.replace.bind(this);
         this.setOptions=this.setOptions.bind(this);
         this.remoteChannel=remotechannel;
-        if (startlocation){
-            this.push(startlocation,startoptions);
-        }
+        this.checkFunction=checkFunction;
+
     }
     setCallback(callback){
         this.callback=callback;
     }
+    checkLocation(newLocation){
+        if (! this.checkFunction) return true;
+        return this.checkFunction(newLocation);
+    }
     setFromRemote(location,options){
+        if (! this.checkLocation(location)) return;
         this.history.splice(1, this.history.length);
         this.history.push({location:location,options:assign({},options,{remote:true})});
         this.updateCallback(false, true);
     }
     replace(location,options){
+        if (! this.checkLocation(location)) return;
         if (this.history.length < 1){
             this.push(location,options);
             return;
@@ -57,6 +62,7 @@ class History{
         this.updateCallback();
     }
     push(location,options){
+        if (! this.checkLocation(location)) return;
         this.history.push({location:location,options:options||{}});
         this.updateCallback();
     }

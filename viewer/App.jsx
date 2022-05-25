@@ -65,7 +65,7 @@ class Router extends Component {
         super(props);
     }
     render() {
-        let Page=getPageForName(this.props.location);
+        let Page=this.props.pageContext.getPage();
         if (Page === undefined){
             Page=Other;
         }
@@ -79,9 +79,9 @@ class Router extends Component {
             {this.props.dim ? <div className="dimm" style={dimStyle} onClick={Dimmer.trigger}></div>:null}
                 <Page
                     style={style}
-                    options={this.props.options}
-                    location={this.props.location}
-                    history={this.props.history}
+                    location={this.props.pageContext.getHistory().currentLocation(false)}
+                    options={this.props.pageContext.getHistory().currentLocation(true).options}
+                    history={this.props.pageContext.getHistory()}
                     small={small}
                     isEditing={this.props.isEditing}
                 />
@@ -349,9 +349,7 @@ class App extends React.Component {
                 isEditing:keys.gui.global.layoutEditing
                 },keys.gui.capabilities)
             }
-                location={this.leftContext.getHistory().currentLocation(false)}
-                options={this.leftContext.getHistory().currentLocation(true).options}
-                history={this.leftContext.getHistory()}
+                pageContext={this.leftContext}
                 nightMode={this.props.nightMode}
                 />
             <Dialogs

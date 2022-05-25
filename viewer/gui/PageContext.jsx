@@ -3,12 +3,15 @@
  */
 
 import History from '../util/history';
+import {allowInSecond, getPageForName} from "./PageList";
 
 
 export default class PageContext{
     constructor(isMain,startpage) {
         this.isMain=isMain;
-        this.history=new History();
+        this.history=new History(isMain?
+            undefined:
+            (location)=>allowInSecond(location));
         this.history.push(startpage);
         this.callback=undefined;
         this.history.setCallback((top)=>{
@@ -21,5 +24,13 @@ export default class PageContext{
     }
     getHistory(){
         return this.history;
+    }
+    getPage(){
+        let location=this.history.currentLocation();
+        return getPageForName(location,this.isMain);
+    }
+    canShowPage(name){
+        if (this.isMain) return true;
+        return allowInSecond(name);
     }
 }
