@@ -5,23 +5,6 @@ import History from './util/history.js';
 import Dynamic from './hoc/Dynamic.jsx';
 import keys,{KeyHelper} from './util/keys.jsx';
 import MainPage from './gui/MainPage.jsx';
-import InfoPage from './gui/InfoPage.jsx';
-import GpsPage from './gui/GpsPage.jsx';
-import AisPage from './gui/AisPage.jsx';
-import AisInfoPage from './gui/AisInfoPage.jsx';
-import AddOnPage from './gui/AddOnPage.jsx';
-import AddressPage from './gui/AddressPage.jsx';
-import StatusPage from './gui/StatusPage.jsx';
-import WpaPage from './gui/WpaPage.jsx';
-import RoutePage from './gui/RoutePage.jsx';
-import DownloadPage from './gui/DownloadPage.jsx';
-import SettingsPage from './gui/SettingsPage.jsx';
-import NavPage from './gui/NavPage.jsx';
-import EditRoutePage from './gui/EditRoutePage.jsx';
-import WarningPage from './gui/WarningPage.jsx';
-import ViewPage from './gui/ViewPage.jsx';
-import AddonConfigPage from './gui/AddOnConfigPage.jsx';
-import PropertyHandler from './util/propertyhandler.js';
 import OverlayDialog from './components/OverlayDialog.jsx';
 import globalStore from './util/globalstore.jsx';
 import Requests from './util/requests.js';
@@ -43,7 +26,8 @@ import base from "./base";
 import propertyHandler from "./util/propertyhandler";
 import MapHolder from "./map/mapholder";
 import NavData from './nav/navdata';
-import alarmhandler from "./nav/alarmhandler.js";
+import {getPageForName} from "./gui/PageList";
+
 
 
 const DynamicSound=Dynamic(SoundHandler);
@@ -74,42 +58,13 @@ class Other extends React.Component{
 }
 
 
-class MainWrapper extends React.Component{
-    constructor(props){
-        super(props);
-    }
-    render(){
-        return <MainPage {...this.props}/>
-    }
-    componentDidMount(){
-        this.props.history.reset(); //reset history if we reach the mainpage
-    }
-}
-const pages={
-    mainpage: MainWrapper,
-    infopage: InfoPage,
-    gpspage: GpsPage,
-    aispage: AisPage,
-    aisinfopage:AisInfoPage,
-    addonpage:AddOnPage,
-    addresspage:AddressPage,
-    statuspage:StatusPage,
-    wpapage:WpaPage,
-    routepage:RoutePage,
-    downloadpage:DownloadPage,
-    settingspage:SettingsPage,
-    navpage: NavPage,
-    editroutepage:EditRoutePage,
-    warningpage:WarningPage,
-    viewpage:ViewPage,
-    addonconfigpage: AddonConfigPage
-};
+
 class Router extends Component {
     constructor(props) {
         super(props);
     }
     render() {
-        let Page=pages[this.props.location];
+        let Page=getPageForName(this.props.location,true);
         if (Page === undefined){
             Page=Other;
         }
