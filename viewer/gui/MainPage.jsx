@@ -39,7 +39,7 @@ class BottomLine extends React.Component {
                 this.timerCall,
                 globalStore.getData(keys.properties.positionQueryTimeout), true);
             this.timerCall = this.timerCall.bind(this);
-            GuiHelper.storeHelperState(this,{
+            GuiHelper.storeHelperState(this,this.props.store,{
                 valid: keys.nav.gps.valid,
                 connectionLost: keys.nav.gps.connectionLost
             })
@@ -409,7 +409,9 @@ class MainPage extends React.Component {
                         />
                         }
                   bottomContent={
-                    <BottomLine />
+                    <BottomLine
+                        store={self.props.store}
+                    />
                     }
                   buttonList={self.getButtons()}
                   dummy={self.state.status}

@@ -1,11 +1,13 @@
 import remotechannel, {COMMANDS} from "./remotechannel";
 const REMOTE_CMD=COMMANDS.setPage;
 import assign from 'object-assign'
+import keys from "./keys";
 
 class History{
-    constructor(callback,startlocation,startoptions){
+    static storeKey=keys.gui.global.currentLocation;
+    constructor(store,startlocation,startoptions){
         this.history=[];
-        this.callback=callback;
+        this.store=store;
         this.pop=this.pop.bind(this);
         this.push=this.push.bind(this);
         this.updateCallback=this.updateCallback.bind(this);
@@ -15,11 +17,10 @@ class History{
         this.remoteChannel=remotechannel;
         if (startlocation){
             this.push(startlocation,startoptions);
+            this.updateCallback(false,true);
         }
     }
-    setCallback(callback){
-        this.callback=callback;
-    }
+
     setFromRemote(location,options){
         this.history.splice(1, this.history.length);
         this.history.push({location:location,options:assign({},options,{remote:true})});
@@ -100,10 +101,16 @@ class History{
                 topEntry.options.returning=true;
             }
         }
-        if (this.callback) this.callback(topEntry);
+        this.store.storeData(History.storeKey,topEntry);
         if (! opt_noremote){
             this.remoteChannel.sendMessage(REMOTE_CMD+' '+topEntry.location+' '+JSON.stringify(topEntry.options))
         }
+    }
+    static getLocationFromState(state){
+        return (state||{}).location;
+    }
+    static getOptionsFromState(state){
+        return (state||{}).options;
     }
 }
 export default History;

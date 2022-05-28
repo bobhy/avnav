@@ -121,6 +121,7 @@ Page.pageProperties={
     options: PropTypes.object,
     location: PropTypes.string.isRequired,
     history: PropTypes.object.isRequired,
+    store: PropTypes.object.isRequired,
     small: PropTypes.bool.isRequired
 }
 Page.propTypes=assign({},Page.pageProperties,{

@@ -14,9 +14,10 @@ import AisFormatter from "../nav/aisformatter";
 
 const K=999; //the real value does not matter
 const V=888; //keys that can be used as value display
+const P=777; //page context aware keys
 
 let valueKeys=[]; // a list of keys that can be used to display values in widgets
-
+let contextAwareKeys=[];
 
 export const PropertyType={
     CHECKBOX:0,
@@ -53,6 +54,14 @@ export const Property=function(defaultv,opt_label,opt_type,opt_values,opt_initia
  * @constructor
  */
 const D=function(description){
+    this.description=description;
+};
+/**
+ * page context aware key with description
+ * @param description
+ * @constructor
+ */
+const PD=function(description){
     this.description=description;
 };
 
@@ -114,19 +123,19 @@ let keys={
             updateleg: new D("update counter for leg")
         },
         display:{
-            boatDirection: new D("the direction of the boat to be used for display"),
-            directionMode: new D("one of cog,hdm,hdt"),
-            isSteady: new D("will be true if steady detected"),
-            mapDirection: new D("the direction that will be used to rotate the map with course up")
+            boatDirection: new PD("the direction of the boat to be used for display"),
+            directionMode: new PD("one of cog,hdm,hdt"),
+            isSteady: new PD("will be true if steady detected"),
+            mapDirection: new PD("the direction that will be used to rotate the map with course up")
         },
         alarms:{
             all:K,
         },
         center:{
-            course: V,
-            distance: V,
-            markerCourse: V,
-            markerDistance: V
+            course: P,
+            distance: P,
+            markerCourse: P,
+            markerDistance: P
         },
         wp:{
             course: V,
@@ -153,9 +162,9 @@ let keys={
         },
 
         ais:{
-            nearest: K, //to be displayed
+            nearest: P, //to be displayed
             list:K,
-            trackedMmsi: K,
+            trackedMmsi: P,
             updateCount:K
         },
         routeHandler:{
@@ -172,12 +181,12 @@ let keys={
         }
     },
     map:{
-        lockPosition: K,
-        courseUp: K,
-        currentZoom:K,
-        requiredZoom:K,
-        centerPosition:K,
-        measurePosition: K,
+        lockPosition: P,
+        courseUp: P,
+        currentZoom:P,
+        requiredZoom:P,
+        centerPosition:P,
+        measurePosition: P,
         },
     gui:{
         capabilities:{
@@ -218,10 +227,11 @@ let keys={
             computedButtonWidth: K,
             isFullScreen: K,
             remoteChannelState:K,
+            currentLocation: new PD('object with location and options')
 
         },
         gpspage:{
-            pageNumber:K,
+            pageNumber:P,
         },
         addonpage:{
             activeAddOn:K,
@@ -426,12 +436,23 @@ function update_keys(base,name){
             base[k]=cname;
             continue;
         }
+        if (base[k] === P){
+            contextAwareKeys.push(cname);
+            base[k]=cname;
+            continue;
+        }
         let current=base[k];
         if (typeof (current) === 'object'){
-            if (current instanceof D || current instanceof Property || current instanceof VD){
+            if (current instanceof D ||
+                current instanceof Property ||
+                current instanceof VD ||
+                current instanceof PD){
                 keyDescriptions[cname]=current;
                 if (current instanceof VD){
                     valueKeys.push(cname);
+                }
+                if (current instanceof PD){
+                    contextAwareKeys.push(cname);
                 }
                 base[k]=cname;
                 continue;
@@ -443,7 +464,6 @@ function update_keys(base,name){
 }
 
 update_keys(keys);
-
 
 export const KeyHelper = {
     keyNodeToString:(keyNode)=> {
@@ -515,7 +535,14 @@ export const KeyHelper = {
      */
     getValueKeys:()=>{
         return valueKeys;
+    },
+    getContextAwareKeys:()=>{
+        return contextAwareKeys;
+    },
+    isContextAwareKey:(key)=>{
+        return contextAwareKeys.indexOf(key) >= 0;
     }
+
 };
 
 export default  keys;

@@ -27,6 +27,8 @@ import propertyHandler from "./util/propertyhandler";
 import MapHolder from "./map/mapholder";
 import NavData from './nav/navdata';
 import {getPageForName} from "./gui/PageList";
+import Store from "./util/store";
+import alarmhandler from "./nav/alarmhandler.js";
 
 
 
@@ -81,6 +83,7 @@ class Router extends Component {
                     options={this.props.options}
                     location={this.props.location}
                     history={this.props.history}
+                    store={this.props.store}
                     small={small}
                     isEditing={this.props.isEditing}
                 />
@@ -111,17 +114,19 @@ class App extends React.Component {
         this.state={
             error:0
         };
-        this.history=new History();
-        this.rightHistory=new History();
+        let pageContextKeys=KeyHelper.getContextAwareKeys();
+        this.commonStore=globalStore;
+        this.store=new Store('main',this.commonStore,pageContextKeys);
+        this.secondStore=new Store('second',this.commonStore,pageContextKeys);
         this.buttonSizer=null;
-        globalStore.storeData(keys.gui.global.onAndroid,false,true);
+        this.commonStore.storeData(keys.gui.global.onAndroid,false,true);
         //make the android API available as avnav.android
         if (window.avnavAndroid){
             base.log("android integration enabled");
-            globalStore.storeData(keys.gui.global.onAndroid,true,true);
+            this.commonStore.storeData(keys.gui.global.onAndroid,true,true);
             avnav.android=window.avnavAndroid;
-            globalStore.storeData(keys.properties.routingServerError,false,true);
-            globalStore.storeData(keys.properties.connectedMode,true,true);
+            this.commonStore.storeData(keys.properties.routingServerError,false,true);
+            this.commonStore.storeData(keys.properties.connectedMode,true,true);
             avnav.version=avnav.android.getVersion();
             avnav.android.applicationStarted();
             avnav.android.receiveEvent=(key,id)=>{
@@ -139,12 +144,12 @@ class App extends React.Component {
                     this.history.pop();
                 }
                 if (key == 'propertyChange'){
-                    globalStore.storeData(keys.gui.global.propertySequence,
-                        globalStore.getData(keys.gui.global.propertySequence,0)+1);
+                    this.commonStore.storeData(keys.gui.global.propertySequence,
+                        this.commonStore.getData(keys.gui.global.propertySequence,0)+1);
                 }
                 if (key == "reloadData"){
-                    globalStore.storeData(keys.gui.global.reloadSequence,
-                        globalStore.getData(keys.gui.global.reloadSequence,0)+1);
+                    this.commonStore.storeData(keys.gui.global.reloadSequence,
+                        this.commonStore.getData(keys.gui.global.reloadSequence,0)+1);
                 }
                 AndroidEventHandler.handleEvent(key,id);
             };
@@ -152,20 +157,20 @@ class App extends React.Component {
         let startpage="warningpage";
         let firstStart=true;
         if (typeof window.localStorage === 'object'){
-            if (localStorage.getItem(globalStore.getData(keys.properties.licenseAcceptedName)) === 'true'){
+            if (localStorage.getItem(this.commonStore.getData(keys.properties.licenseAcceptedName)) === 'true'){
                 startpage="mainpage";
                 firstStart=false;
             }
         }
+        this.history=new History(this.store,startpage);
+        this.secondHistory=new History(this.secondStore,'mainpage');
         if (firstStart){
             propertyHandler.firstStart();
         }
-        this.history.push(startpage);
-        this.rightHistory.push(startpage);
-        this.leftHistoryState=stateHelper(this,this.history.currentLocation(true),'leftHistory');
-        this.rightHistoryState=stateHelper(this,this.rightHistory.currentLocation(true),'rightHistory');
-        this.history.setCallback((topEntry)=>this.leftHistoryState.setState(topEntry,true));
-        this.rightHistory.setCallback((topEntry)=>this.rightHistoryState.setState(topEntry,true));
+        GuiHelpers.storeHelperState(this,this.store,
+            {location:keys.gui.global.currentLocation});
+        GuiHelpers.storeHelperState(this,this.secondStore,
+            {secondLocation:keys.gui.global.currentLocation});
         Requests.getJson("/user/viewer/images.json",{useNavUrl:false,checkOk:false})
             .then((data)=>{
                 MapHolder.setImageStyles(data);
@@ -227,7 +232,7 @@ class App extends React.Component {
                 if (parts.length > 1) {
                     options = JSON.parse(parts[1]);
                 }
-                if (pages[location] === undefined){
+                if (getPageForName(location,true) === undefined){
                     return;
                 }
                 this.history.setFromRemote(location,options);
@@ -236,7 +241,7 @@ class App extends React.Component {
         GuiHelpers.storeHelper(this,(data)=>{
             let lost=data.connectionLost;
             if (lost) {
-                if (globalStore.getData(keys.properties.connectionLostAlarm)) {
+                if (this.commonStore.getData(keys.properties.connectionLostAlarm)) {
                     alarmhandler.startLocalAlarm(LOCAL_TYPES.connectionLost);
                 }
             }
@@ -265,20 +270,20 @@ class App extends React.Component {
         this.setState({error:2});
     }
     checkSizes(){
-        if (globalStore.getData(keys.gui.global.hasActiveInputs,false)) return;
+        if (this.commonStore.getData(keys.gui.global.hasActiveInputs,false)) return;
         if (! this.refs.app) return;
         let current=this.refs.app.getBoundingClientRect();
         if (! current) return;
-        let small = current.width <globalStore.getData(keys.properties.smallBreak);
-        globalStore.storeData(keys.gui.global.smallDisplay,small); //set small before we change dimensions...
-        globalStore.storeData(keys.gui.global.windowDimensions,{width:current.width,height:current.height});
+        let small = current.width <this.commonStore.getData(keys.properties.smallBreak);
+        this.commonStore.storeData(keys.gui.global.smallDisplay,small); //set small before we change dimensions...
+        this.commonStore.storeData(keys.gui.global.windowDimensions,{width:current.width,height:current.height});
         this.computeButtonSizes();
 
     }
     computeButtonSizes(){
         if (! this.buttonSizer) return;
         let rect=this.buttonSizer.getBoundingClientRect();
-        globalStore.storeMultiple(
+        this.commonStore.storeMultiple(
             {height:rect.height,width:rect.width},
             {height: keys.gui.global.computedButtonHeight,width:keys.gui.global.computedButtonWidth}
         );
@@ -303,7 +308,7 @@ class App extends React.Component {
         }
     }
     keyDown(evt){
-        let inDialog=globalStore.getData(keys.gui.global.hasActiveInputs,false);
+        let inDialog=this.commonStore.getData(keys.gui.global.hasActiveInputs,false);
         KeyHandler.handleKeyEvent(evt,inDialog);
     }
     render(){
@@ -350,9 +355,10 @@ class App extends React.Component {
                 isEditing:keys.gui.global.layoutEditing
                 },keys.gui.capabilities)
             }
-                location={this.leftHistoryState.getValue('location')}
-                options={this.leftHistoryState.getValue('options')}
+                location={History.getLocationFromState(this.state.location)}
+                options={History.getOptionsFromState(this.state.location)}
                 history={this.history}
+                store={this.store}
                 nightMode={this.props.nightMode}
                 />
             <Dialogs

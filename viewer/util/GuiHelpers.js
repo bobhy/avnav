@@ -124,17 +124,18 @@ const storeHelper=(thisref,dataCanged,storeKeys,opt_callImmediate)=>{
 /**
  * get some data from the global store into our state
  * @param thisref
+ * @param store
  * @param opt_stateName - if set - create a sub object in the state
  * @param storeKeys
  */
-const storeHelperState=(thisref,storeKeys,opt_stateName)=>{
+const storeHelperState=(thisref,store,storeKeys,opt_stateName)=>{
     let cbHandler=new Callback((data)=>{
         let ns={};
         if (opt_stateName) {
             ns[opt_stateName] = globalStore.getMultiple(storeKeys);
         }
         else{
-            ns= globalStore.getMultiple(storeKeys);
+            ns= store.getMultiple(storeKeys);
         }
         thisref.setState(ns);
     });
@@ -143,12 +144,12 @@ const storeHelperState=(thisref,storeKeys,opt_stateName)=>{
         thisref.state[opt_stateName] = globalStore.getMultiple(storeKeys);
     }
     else{
-        assign(thisref.state,globalStore.getMultiple(storeKeys));
+        assign(thisref.state,store.getMultiple(storeKeys));
     }
-    globalStore.register(cbHandler,storeKeys);
+    store.register(cbHandler,storeKeys);
     lifecycleSupport(thisref,(unmount)=>{
         if ( unmount ){
-            globalStore.deregister(cbHandler)
+            store.deregister(cbHandler)
         }
     });
 };

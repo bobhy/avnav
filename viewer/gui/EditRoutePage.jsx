@@ -327,7 +327,7 @@ class EditRoutePage extends React.Component{
         },globalStore.getData(keys.properties.wpButtonTimeout)*1000);
         RouteHandler.setCurrentRoutePage(PAGENAME);
         this.widgetClick=this.widgetClick.bind(this);
-        GuiHelpers.storeHelperState(this,{
+        GuiHelpers.storeHelperState(this,this.props.store,{
             activeRouteName: keys.nav.routeHandler.activeName,
             dimensions:keys.gui.global.windowDimensions
         });
