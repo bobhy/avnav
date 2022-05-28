@@ -97,27 +97,28 @@ class Callback{
  * easy access to global store
  * alternative to the Dynamic HOC
  * @param thisref
+ * @param store
  * @param dataCanged will be called with an object with the new values
  * @param storeKeys
  * @param opt_callImmediate - call the cb with initial values 0/undef: never, 1: immediate, 2: on mount
  */
-const storeHelper=(thisref,dataCanged,storeKeys,opt_callImmediate)=>{
+const storeHelper=(thisref,store,dataCanged,storeKeys,opt_callImmediate)=>{
     let cbHandler=new Callback(()=>{
-        dataCanged(globalStore.getMultiple(storeKeys));
+        dataCanged(store.getMultiple(storeKeys));
     });
-    globalStore.register(cbHandler,storeKeys);
+    store.register(cbHandler,storeKeys);
     lifecycleSupport(thisref,(unmount)=>{
         if (unmount ){
-            globalStore.deregister(cbHandler)
+            store.deregister(cbHandler)
         }
         else{
             if (opt_callImmediate == 2){
-                dataCanged(globalStore.getMultiple(storeKeys));
+                dataCanged(store.getMultiple(storeKeys));
             }
         }
     });
     if (opt_callImmediate == 1){
-        dataCanged(globalStore.getMultiple(storeKeys));
+        dataCanged(store.getMultiple(storeKeys));
     }
 };
 

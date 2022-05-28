@@ -114,10 +114,10 @@ class MainPage extends React.Component {
             overlays:{}
         };
         this.fillList=this.fillList.bind(this);
-        GuiHelper.storeHelper(this,(data)=>{
+        GuiHelper.storeHelper(this,this.props.store,(data)=>{
             this.readAddOns();
         },{sequence:keys.gui.global.reloadSequence},2);
-        GuiHelper.storeHelper(this,(data)=>{
+        GuiHelper.storeHelper(this,this.props.store,(data)=>{
             this.fillList();
         },{sequence:keys.gui.global.reloadSequence});
         this.timer=GuiHelper.lifecycleTimer(this,(sequence)=>{

@@ -46,7 +46,7 @@ class Page extends React.Component {
             hideButtons:false,
             connectionLost:globalStore.getData(keys.nav.gps.connectionLost)
         }
-        GuiHelpers.storeHelper(this,(data)=>{
+        GuiHelpers.storeHelper(this,this.props.store,(data)=>{
             this.setState(data)
         },{connectionLost: keys.nav.gps.connectionLost});
     }

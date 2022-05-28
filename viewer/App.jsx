@@ -238,7 +238,7 @@ class App extends React.Component {
                 this.history.setFromRemote(location,options);
             }catch (e){}
         });
-        GuiHelpers.storeHelper(this,(data)=>{
+        GuiHelpers.storeHelper(this,this.commonStore,(data)=>{
             let lost=data.connectionLost;
             if (lost) {
                 if (this.commonStore.getData(keys.properties.connectionLostAlarm)) {

@@ -175,7 +175,7 @@ class MapWidgetsDialog extends React.Component{
         this.state={
             items:this.getCurrent()
         };
-        this.sequence=GuiHelpers.storeHelper(this,()=>{
+        this.sequence=GuiHelpers.storeHelper(this,this.props.store,()=>{
             this.setState({items:this.getCurrent()})
         },[keys.gui.global.layoutSequence]);
     }
@@ -227,7 +227,7 @@ class NavPage extends React.Component{
         };
         this.showWpButtons=this.showWpButtons.bind(this);
         this.widgetClick=this.widgetClick.bind(this);
-        this.sequence=GuiHelpers.storeHelper(this,()=>{
+        this.sequence=GuiHelpers.storeHelper(this,this.props.store,()=>{
             MapHolder.triggerRender();
         },[keys.gui.global.layoutSequence]);
         globalStore.storeData(keys.map.measurePosition,undefined);
@@ -614,7 +614,9 @@ class NavPage extends React.Component{
                 name: 'NavMapWidgets',
                 editOnly: true,
                 overflow: true,
-                onClick: ()=>OverlayDialog.dialog((props)=><MapWidgetsDialog {...props}/>)
+                onClick: ()=>OverlayDialog.dialog((props)=><MapWidgetsDialog
+                    store={this.props.store}
+                    {...props}/>)
             },
             LayoutFinishedDialog.getButtonDef(),
             RemoteChannelDialog({overflow:true}),
