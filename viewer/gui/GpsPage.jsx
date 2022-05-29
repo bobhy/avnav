@@ -188,9 +188,9 @@ class GpsPage extends React.Component{
                 },
                 overflow: true
             },
-            anchorWatch(),
+            anchorWatch(this.props.pageContext),
             RemoteChannelDialog({overflow:true}),
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             EditPageDialog.getButtonDef('gpspage'+store.getData(keys.gui.gpspage.pageNumber,0),
                 PANEL_LIST,
                 [LayoutHandler.OPTIONS.ANCHOR]),

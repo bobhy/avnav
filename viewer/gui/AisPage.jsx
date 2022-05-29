@@ -174,7 +174,7 @@ class AisPage extends React.Component{
                 onClick:this.sortDialog
 
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Cancel',
                 onClick: ()=>{self.props.history.pop()}

@@ -434,7 +434,7 @@ class SettingsPage extends React.Component{
                 },
                 visible: store.getData(keys.properties.connectedMode,false) && store.getData(keys.gui.capabilities.uploadSettings)
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Cancel',
                 onClick: ()=>{

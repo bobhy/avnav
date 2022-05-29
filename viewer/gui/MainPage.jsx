@@ -212,7 +212,7 @@ class MainPage extends React.Component {
                     store.storeData(keys.properties.nightMode, mode);
                 }
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             LayoutFinishedDialog.getButtonDef(),
 
             {

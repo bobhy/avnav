@@ -168,8 +168,8 @@ class App extends React.Component {
         if (firstStart){
             propertyHandler.firstStart();
         }
-        this.pageContext=new PageContext(this.store,this.history);
-        this.secondPageContext=new PageContext(this.secondStore,this.secondHistory);
+        this.pageContext=new PageContext(this.store,this.history,MapHolder);
+        this.secondPageContext=new PageContext(this.secondStore,this.secondHistory,MapHolder);
         GuiHelpers.storeHelperState(this,this.store,
             {location:keys.gui.global.currentLocation});
         GuiHelpers.storeHelperState(this,this.secondStore,

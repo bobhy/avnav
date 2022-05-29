@@ -105,7 +105,10 @@ const itemSort=(a,b)=>{
 
 
 const DownloadItem=(props)=>{
-    let actions=ItemActions.create(props,props.store.getData(keys.properties.connectedMode,false));
+    let actions=ItemActions.create(props,
+        props.pageContext.getStore().getData(keys.properties.connectedMode,false),
+        props.pageContext
+    );
     let  cls="listEntry "+actions.className;
     let dataClass="downloadItemData";
     if (! actions.showDelete ) dataClass+=" noDelete";
@@ -365,7 +368,7 @@ class DownloadPage extends React.Component{
                     this.setState({uploadSequence:this.state.uploadSequence+1});
                 }
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Cancel',
                 onClick: ()=>{this.props.history.pop()}
@@ -385,7 +388,10 @@ class DownloadPage extends React.Component{
      */
     checkNameForUpload(name){
         return new Promise((resolve,reject)=>{
-            let actions=ItemActions.create({type:this.state.type},false);
+            let actions=ItemActions.create(
+                {type:this.state.type},
+                false,
+                this.props.pageContext);
             let ext=Helper.getExt(name);
             let rt={name:name};
             let serverName=actions.nameForUpload(name);
@@ -499,7 +505,9 @@ class DownloadPage extends React.Component{
      *          if no function is returned, the upload will go to the server
      */
     getLocalUploadFunction(){
-        let actions=ItemActions.create(this.state.type);
+        let actions=ItemActions.create(this.state.type,
+            false,
+            this.props.pageContext);
         if (actions.localUploadFunction){
             return (obj)=> {
                 if (!obj) {
@@ -549,7 +557,7 @@ class DownloadPage extends React.Component{
                 id="downloadpage"
                 mainContent={<React.Fragment>
                         <ItemList
-                            itemProperties={{store:store}}
+                            itemProperties={{pageContext:this.props.pageContext}}
                             itemClass={DownloadItem}
                             scrollable={true}
                             itemList={this.state.items}
@@ -568,7 +576,7 @@ class DownloadPage extends React.Component{
                                     EditOverlaysDialog.createDialog(item,()=>this.fillData());
                                     return;
                                 }
-                                showFileDialog(this.props.history,item,
+                                showFileDialog(this.props.pageContext,item,
                                     (action,item,pageChanged)=>{
                                         if (pageChanged) return;
                                         if (action === 'userapp') this.readAddOns()
@@ -600,7 +608,9 @@ class DownloadPage extends React.Component{
                             null}
                     </React.Fragment>
                 }
-                title={ItemActions.create({type:this.state.type}).headline}
+                title={ItemActions.create(
+                    {type:this.state.type}
+                ).headline}
                 buttonList={this.getButtons()}
                 />
         );

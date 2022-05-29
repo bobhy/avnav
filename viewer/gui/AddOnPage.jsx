@@ -18,7 +18,7 @@ class AddOnPage extends React.Component{
         super(props);
         let self=this;
         this.buttons=[
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Back',
                 onClick: ()=>{window.history.back();}

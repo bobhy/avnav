@@ -1,7 +1,6 @@
 import React from 'react';
 import NavData from '../nav/navdata.js';
 import OverlayDialog from '../components/OverlayDialog.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import Toast from '../components/Toast.jsx';
 import AlarmHandler from '../nav/alarmhandler.js';
@@ -9,7 +8,6 @@ import RouteEdit from '../nav/routeeditor.js';
 import {Input} from "./Inputs";
 import DialogButton from "./DialogButton";
 import assign from "object-assign";
-import MapHolder from '../map/mapholder';
 import NavCompute from "../nav/navcompute";
 
 
@@ -18,7 +16,8 @@ const activeRoute=new RouteEdit(RouteEdit.MODES.ACTIVE,true);
 class WatchDialog extends React.Component{
     constructor(props) {
         super(props);
-        let defDistance = globalStore.getData(keys.properties.anchorWatchDefault);
+        let store=this.props.pageContext.getStore();
+        let defDistance = store.getData(keys.properties.anchorWatchDefault);
         this.state={
             radius: defDistance,
             bearing: 0,
@@ -29,7 +28,7 @@ class WatchDialog extends React.Component{
     computeRefPoint(sv,fromCenter){
         let cv=assign({},sv);
         if (fromCenter){
-            cv.refPoint=MapHolder.getCenter();
+            cv.refPoint=this.props.pageContext.getMapHolder().getCenter();
         }
         else {
             cv.refPoint = NavData.getCurrentPosition();
@@ -80,7 +79,7 @@ class WatchDialog extends React.Component{
     }
 }
 
-export const anchorWatchDialog = (overlayContainer)=> {
+export const anchorWatchDialog = (overlayContainer,pageContext)=> {
     let router = NavData.getRoutingHandler();
     if (activeRoute.anchorWatch() !== undefined) {
         router.anchorOff();
@@ -98,6 +97,7 @@ export const anchorWatchDialog = (overlayContainer)=> {
     OverlayDialog.dialog((props)=>{
         return <WatchDialog
             {...props}
+            pageContext={pageContext}
             setCallback={(values)=>{
                 router.anchorOn(values.refPoint,values.radius);
             }}
@@ -105,7 +105,7 @@ export const anchorWatchDialog = (overlayContainer)=> {
     })
 };
 
-export default  ()=>{
+export default  (pageContext)=>{
     return{
         name: "AnchorWatch",
         storeKeys: {watchDistance:keys.nav.anchor.watchDistance},
@@ -113,7 +113,7 @@ export default  ()=>{
             return {toggle:state.watchDistance !== undefined}
         },
         onClick: ()=>{
-            anchorWatchDialog(undefined);
+            anchorWatchDialog(undefined,pageContext);
         },
         editDisable:true
     }

@@ -11,7 +11,7 @@ class InfoPage extends React.Component{
     constructor(props){
         super(props);
         this.buttons=[
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Cancel',
                 onClick: ()=>{this.props.history.pop()}

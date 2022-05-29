@@ -35,7 +35,7 @@ class AddressPage extends React.Component{
                 visible: store.getData(keys.gui.global.onAndroid),
                 onClick:()=>{avnav.android.launchBrowser();}
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Cancel',
                 onClick: ()=>{this.props.history.pop()}

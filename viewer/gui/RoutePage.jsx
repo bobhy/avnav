@@ -198,7 +198,7 @@ class RoutePage extends React.Component{
                     });
                 }
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Cancel',
                 onClick: ()=>{this.props.history.pop()}

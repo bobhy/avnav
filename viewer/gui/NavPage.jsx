@@ -233,7 +233,7 @@ class NavPage extends React.Component{
         },[keys.gui.global.layoutSequence]);
         store.storeData(keys.map.measurePosition,undefined);
         this.waypointButtons=[
-            anchorWatch(),
+            anchorWatch(this.props.pageContext),
             {
                 name:'WpLocate',
                 onClick:()=>{
@@ -427,7 +427,7 @@ class NavPage extends React.Component{
                    name:'toroute',
                    label: 'Convert',
                    onClick:(props)=>{
-                       TrackConvertDialog.showDialog(this.props.history, props.overlayName)
+                       TrackConvertDialog.showDialog(this.props.pageContext, props.overlayName)
                    }
                 });
             }
@@ -561,7 +561,7 @@ class NavPage extends React.Component{
             },
             {
                 name: "NavOverlays",
-                onClick:()=>overlayDialog(),
+                onClick:()=>overlayDialog(this.props.pageContext),
                 overflow: true,
                 storeKeys:{
                     visible:keys.gui.capabilities.uploadOverlays
@@ -609,7 +609,7 @@ class NavPage extends React.Component{
                     MapHolder.triggerRender();
                 }
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             EditPageDialog.getButtonDef(PAGENAME,
                 MapPage.PANELS,
                 [LayoutHandler.OPTIONS.SMALL,LayoutHandler.OPTIONS.ANCHOR]),

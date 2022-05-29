@@ -16,14 +16,12 @@ import Toast from '../components/Toast.jsx';
 import NavHandler from '../nav/navdata.js';
 import OverlayDialog from '../components/OverlayDialog.jsx';
 import WidgetFactory from '../components/WidgetFactory.jsx';
-import MapHolder from '../map/mapholder.js';
 import navobjects from '../nav/navobjects.js';
 import EditWidgetDialog from '../components/EditWidgetDialog.jsx';
 import LayoutHandler from '../util/layouthandler.js';
 import EulaDialog from './EulaDialog.jsx';
 import EditOverlaysDialog from './EditOverlaysDialog.jsx';
 import {getOverlayConfigName} from "../map/chartsourcebase";
-import mapholder from "../map/mapholder.js";
 import Helper from "../util/helper";
 import assign from 'object-assign';
 
@@ -109,9 +107,9 @@ class MapPage extends React.Component{
     }
     componentWillUnmount(){
         NavHandler.setAisCenterMode(navobjects.AisCenterMode.GPS);
-        MapHolder.renderTo();
+        this.props.pageContext.getMapHolder().renderTo();
         if (this.subscribeToken !== undefined){
-            MapHolder.unsubscribe(this.subscribeToken);
+            this.props.pageContext.getMapHolder().unsubscribe(this.subscribeToken);
             this.subscribeToken=undefined;
         }
     }
@@ -134,8 +132,8 @@ class MapPage extends React.Component{
     componentDidMount(){
         let self=this;
         NavHandler.setAisCenterMode(navobjects.AisCenterMode.MAP);
-        this.subscribeToken=MapHolder.subscribe(this.mapEvent);
-        let chartEntry=MapHolder.getCurrentChartEntry()||{};
+        this.subscribeToken=this.props.pageContext.getMapHolder().subscribe(this.mapEvent);
+        let chartEntry=this.props.pageContext.getMapHolder().getCurrentChartEntry()||{};
         let showMap=()=>{
             if (chartEntry.infoMode !== undefined ){
                 if (needsToShow(chartEntry.url,INFO_TYPES.info,chartEntry.infoMode)){
@@ -143,7 +141,7 @@ class MapPage extends React.Component{
                     setShown(chartEntry.url,INFO_TYPES.info);
                 }
             }
-            MapHolder.loadMap(this.refs.map, this.props.preventCenterDialog).
+            this.props.pageContext.getMapHolder().loadMap(this.refs.map, this.props.preventCenterDialog).
                 then((result)=>{
                     this.computeScalePosition();
                 }).
@@ -245,7 +243,7 @@ class MapPage extends React.Component{
                 }
                 buttonList={self.props.buttonList}
                 buttonWidthChanged={()=>{
-                    mapholder.updateSize();
+                    this.props.pageContext.getMapHolder().updateSize();
                 }}
                 autoHideButtons={self.props.autoHideButtons}
                 />
@@ -270,7 +268,8 @@ MapPage.propertyTypes=assign({},Page.pageProperties,{
 
 });
 
-export const overlayDialog=(opt_chartName,opt_updateCallback)=>{
+export const overlayDialog=(pageContext)=>{
+    let MapHolder=pageContext.getMapHolder();
     let current=MapHolder.getCurrentMergedOverlayConfig();
     if (! current) return;
     let currentChart=MapHolder.getCurrentChartEntry()||{};
@@ -278,12 +277,11 @@ export const overlayDialog=(opt_chartName,opt_updateCallback)=>{
         let canEdit=getOverlayConfigName(currentChart) !== undefined && globalStore.getData(keys.properties.connectedMode,false) ;
         return <EditOverlaysDialog
             {...props}
-            chartName={opt_chartName||currentChart.name}
+            chartName={currentChart.name}
             title="Active Overlays"
             current={current}
             updateCallback={(newConfig)=>{
                 MapHolder.updateOverlayConfig(newConfig);
-                if (opt_updateCallback) opt_updateCallback(newConfig);
                 }
             }
             resetCallback={()=>{

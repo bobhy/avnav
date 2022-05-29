@@ -63,7 +63,7 @@ class ViewPageBase extends React.Component{
     buttons() {
         let self=this;
         return [
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'ViewPageView',
                 visible: this.canChangeMode(),
@@ -117,7 +117,10 @@ class ViewPageBase extends React.Component{
                         }catch(e){
                         }
                     }
-                    let actions=ItemActions.create({type:self.type,name:self.name});
+                    let actions=ItemActions.create(
+                        {type:self.type,name:self.name},
+                        undefined,
+                        this.props.pageContext);
                     let uploadFunction;
                     if (actions.localUploadFunction){
                         uploadFunction=actions.localUploadFunction;
@@ -159,7 +162,10 @@ class ViewPageBase extends React.Component{
     getExt(){
         if (this.url) return Helper.getExt(this.url);
         if (this.html) return 'html';
-        let actions=ItemActions.create({type:this.type,name:this.name});
+        let actions=ItemActions.create(
+            {type:this.type,name:this.name},
+            undefined,
+            this.props.pageContext);
         return actions.extForView;
     }
     isImage(){

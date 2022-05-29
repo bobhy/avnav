@@ -48,7 +48,7 @@ class AddonConfigPage extends React.Component{
         super(props);
         let self=this;
         this.buttons=[
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'AddonConfigPlus',
                 onClick: ()=> {

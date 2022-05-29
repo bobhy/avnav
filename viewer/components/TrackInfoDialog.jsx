@@ -42,7 +42,6 @@ import SimpleRouteFilter from "../nav/simpleroutefilter";
 import navdata from "../nav/navdata";
 import routeobjects from "../nav/routeobjects";
 import RouteEdit from "../nav/routeeditor";
-import mapholder from "../map/mapholder";
 import {stateHelper} from "../util/GuiHelpers";
 
 const RouteHandler=navdata.getRoutingHandler();
@@ -247,7 +246,7 @@ const AskEditRoute=(props)=>{
                     props.closeCallback();
                     let editor=new RouteEdit(RouteEdit.MODES.EDIT);
                     editor.setNewRoute(props.route,0);
-                    this.props.history.push('editroutepage',{center:true});
+                    this.props.pageContext.getHistory().push('editroutepage',{center:true});
                 }}
             >Edit</DB>
         </div>
@@ -315,7 +314,7 @@ export class TrackConvertDialog extends React.Component{
         RouteHandler.saveRoute(route,true)
             .then(()=>{
                 this.props.closeCallback();
-                if (mapholder.getCurrentChartEntry()){
+                if (this.props.pageContext.getMapHolder().getCurrentChartEntry()){
                     OverlayDialog.dialog((props)=>{
                         return <AskEditRoute
                             {...props}
@@ -400,12 +399,12 @@ export class TrackConvertDialog extends React.Component{
 }
 
 TrackConvertDialog.propTypes={
-    history: PropTypes.object.isRequired,
+    pageContext: PropTypes.object.isRequired,
     points: PropTypes.array.isRequired,
     name: PropTypes.string.isRequired
 }
 
-TrackConvertDialog.showDialog=(history,name,opt_showDialogFunction)=>{
+TrackConvertDialog.showDialog=(pageContext,name,opt_showDialogFunction)=>{
     if (!opt_showDialogFunction){
         opt_showDialogFunction=OverlayDialog.dialog;
     }
@@ -414,76 +413,10 @@ TrackConvertDialog.showDialog=(history,name,opt_showDialogFunction)=>{
             opt_showDialogFunction((props) => {
                 return <TrackConvertDialog
                     {...props}
-                    history={history}
+                    pageContext={pageContext}
                     points={info.points} name={name}/>;
             });
         })
         .catch((error) => Toast(error));
 }
 
-class TrackInfoDialog extends React.Component{
-    constructor(props) {
-        super(props);
-        this.state={
-            points:[],
-            loaded:false,
-            name:this.props.name
-        }
-        this.showConvertDialog=this.showConvertDialog.bind(this);
-    }
-
-    componentDidMount() {
-        getTrackInfo(this.props.name)
-            .then((values)=>{
-                this.setState(assign({loaded: true},values));
-            })
-            .catch((error)=>Toast(error));
-    }
-    showConvertDialog(){
-        this.props.closeCallback();
-        OverlayDialog.dialog((props)=>{
-            return <TrackConvertDialog
-                {...props}
-                points={this.state.points}
-                name={this.props.name}/>
-        })
-    }
-    render(){
-       return  <div className="TrackInfoDialog flexInner">
-            <h3 className="dialogTitle">Track Info</h3>
-            {INFO_ROWS.map((row)=>{
-                let v=this.state[row.value];
-                if (v === undefined) return null;
-                if (row.formatter) v=row.formatter(v,this.state);
-                if (v === undefined) return null;
-                return <InfoItem label={row.label} value={v}/>
-            })}
-            <div className="dialogButtons">
-                <DB name={"toroute"}
-                    onClick={this.showConvertDialog}
-                    disabled={!this.state.loaded}
-                >
-                    Convert</DB>
-                <DB name={"cancel"}
-                    onClick={this.props.closeCallback}
-                >Cancel</DB>
-            </div>
-        </div>
-    }
-}
-
-TrackInfoDialog.PropTypes={
-    name: PropTypes.string.isRequired
-}
-TrackInfoDialog.showDialog=(info,opt_showDialogFunction)=>{
-    if (!opt_showDialogFunction) {
-        opt_showDialogFunction = OverlayDialog.dialog;
-    }
-    return opt_showDialogFunction((props)=>{
-        return <TrackInfoDialog
-            {...info}
-            {...props}/>
-    });
-}
-
-export default TrackInfoDialog;

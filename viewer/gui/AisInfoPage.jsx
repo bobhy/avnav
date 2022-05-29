@@ -98,7 +98,7 @@ class AisInfoPage extends React.Component{
                     }
                 }
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Cancel',
                 onClick: ()=>{self.props.history.backFromReplace(true)}

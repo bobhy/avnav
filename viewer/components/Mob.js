@@ -1,5 +1,4 @@
 import NavData from '../nav/navdata.js';
-import MapHolder from '../map/mapholder.js';
 import navobjects from '../nav/navobjects.js';
 import RouteEdit,{StateHelper} from '../nav/routeeditor.js';
 import globalStore from '../util/globalstore.jsx';
@@ -10,7 +9,9 @@ import LayoutHandler from '../util/layouthandler.js';
 const activeRoute=new RouteEdit(RouteEdit.MODES.ACTIVE,true);
 
 
-const controlMob=(start,history)=>{
+const controlMob=(start,pageContext)=>{
+    let history=pageContext.getHistory();
+    let MapHolder=pageContext.getMapHolder();
     let Router=NavData.getRoutingHandler();
     let isActive=StateHelper.targetName(activeRoute.getRawData()) === navobjects.WayPoint.MOB;
     if (start){
@@ -42,12 +43,12 @@ const controlMob=(start,history)=>{
     }
 };
 
-const toggleMob=(history)=>{
+const toggleMob=(pageContext)=>{
     let isActive=StateHelper.targetName(activeRoute.getRawData()) === navobjects.WayPoint.MOB;
-    controlMob(!isActive, history);
+    controlMob(!isActive, pageContext);
 };
 
-const mobDefinition=(history)=>{return {
+const mobDefinition=(pageContext)=>{return {
     name: "MOB",
     storeKeys: activeRoute.getStoreKeys({visible:keys.properties.connectedMode, hasGps: keys.nav.gps.valid}),
     updateFunction:(state)=>{
@@ -58,7 +59,7 @@ const mobDefinition=(history)=>{return {
         }
     },
     onClick:()=>{
-        toggleMob(history);
+        toggleMob(pageContext);
     },
     editDisable:true
 }};

@@ -690,13 +690,13 @@ class EditRoutePage extends React.Component{
             },
             {
                 name: "NavOverlays",
-                onClick:()=>overlayDialog(),
+                onClick:()=>overlayDialog(this.props.pageContext),
                 overflow: true,
                 storeKeys:{
                     visible:keys.gui.capabilities.uploadOverlays
                 }
             },
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             EditPageDialog.getButtonDef(PAGENAME,
                 MapPage.PANELS,[LayoutHandler.OPTIONS.SMALL]),
             LayoutFinishedDialog.getButtonDef(),

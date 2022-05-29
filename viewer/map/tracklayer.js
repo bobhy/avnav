@@ -1,12 +1,10 @@
 /**
  * Created by andreas on 18.05.14.
  */
-    
-import navobjects from '../nav/navobjects';
+
 import keys from '../util/keys.jsx';
 import globalStore from '../util/globalstore.jsx';
-import RouteLayer from "./routelayer";
-import mapholder from "./mapholder";
+
 
 
 class Callback{
@@ -154,7 +152,7 @@ TrackLayer.prototype.findTarget=function(pixel){
     if (! this.trackPixel || ! this.trackPixel.length) return;
     let idx = this.mapholder.findTarget(pixel, this.trackPixel, tolerance);
     if (idx >= 0 && idx < this.trackPoints.length){
-        return mapholder.pointFromMap(this.trackPoints[idx]);
+        return this.mapholder.pointFromMap(this.trackPoints[idx]);
     }
     return;
 };

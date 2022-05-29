@@ -134,7 +134,7 @@ class WpaPage extends React.Component{
         super(props);
         let self=this;
         this.buttons=[
-            Mob.mobDefinition(this.props.history),
+            Mob.mobDefinition(this.props.pageContext),
             {
                 name: 'Cancel',
                 onClick: ()=>{this.props.history.pop()}

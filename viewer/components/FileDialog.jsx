@@ -39,11 +39,10 @@ import NavHandler from "../nav/navdata";
 import Helper from '../util/helper';
 import UserAppDialog from "./UserAppDialog";
 import DownloadButton from "./DownloadButton";
-import TrackInfoDialog, {TrackConvertDialog} from "./TrackInfoDialog";
+import {TrackConvertDialog} from "./TrackInfoDialog";
 import {getTrackInfo,INFO_ROWS as TRACK_INFO_ROWS} from "./TrackInfoDialog";
 import {getRouteInfo,INFO_ROWS as ROUTE_INFO_ROWS} from "./RouteInfoDialog";
 import RouteEdit from "../nav/routeeditor";
-import mapholder from "../map/mapholder";
 import LogDialog from "./LogDialog";
 import {stateHelper} from "../util/GuiHelpers";
 import Formatter from '../util/formatter';
@@ -104,8 +103,8 @@ const getDownloadUrl=(item)=>{
 }
 
 const showConvertFunctions = {
-    track: (history,item) => {
-        TrackConvertDialog.showDialog(history,item.name);
+    track: (pageContext,item) => {
+        TrackConvertDialog.showDialog(pageContext,item.name);
     }
 }
 
@@ -151,7 +150,7 @@ export class ItemActions{
          */
         this.nameForUpload=(name)=>name;
     }
-    static create(props,isConnected){
+    static create(props,isConnected,pageContext){
         if (typeof(props) === 'string') props={type:props};
         if (! props || ! props.type){
             return new ItemActions();
@@ -195,7 +194,7 @@ export class ItemActions{
                 rt.showIsServer=props.server;
                 rt.showDelete= ! props.active &&  props.canDelete !== false  && ( ! props.isServer || isConnected);
                 rt.showView=viewable;
-                rt.showEdit=mapholder.getCurrentChartEntry() !== undefined;
+                rt.showEdit=pageContext && pageContext.getMapHolder().getCurrentChartEntry() !== undefined;
                 rt.showOverlay=canEditOverlays;
                 rt.showDownload=true;
                 rt.extForView='gpx';
@@ -429,12 +428,16 @@ const INFO_FUNCTIONS={
 export default  class FileDialog extends React.Component{
     constructor(props){
         super(props);
+        let store=props.pageContext.getStore();
         this.state={
             changed:false,
             existingName:false,
             name:props.current.name,
             scheme:props.current.scheme,
-            allowed:ItemActions.create(props.current,globalStore.getData(keys.properties.connectedMode,true))
+            allowed:ItemActions.create(props.current,
+                store.getData(keys.properties.connectedMode,true),
+                props.pageContext
+            )
         };
         this.onChange=this.onChange.bind(this);
         this.extendedInfo=stateHelper(this,{},'extendedInfo');
@@ -576,7 +579,7 @@ export default  class FileDialog extends React.Component{
                                 }}
                                 >Log</DB>
                         }
-                        {this.state.allowed.showConvert &&
+                        {this.state.allowed.showConvertFunction &&
                             <DB name="toroute"
                                 onClick={()=>{
                                     this.props.closeCallback()
@@ -712,7 +715,8 @@ export const deleteItem=(info,opt_resultCallback)=> {
     });
 };
 
-export const showFileDialog=(history,item,opt_doneCallback,opt_checkExists)=>{
+export const showFileDialog=(pageContext,item,opt_doneCallback,opt_checkExists)=>{
+    let history=pageContext.getHistory();
     let actionFunction=(action,newItem)=>{
         let doneAction=(pageChanged)=>{
             if (opt_doneCallback){
@@ -802,9 +806,9 @@ export const showFileDialog=(history,item,opt_doneCallback,opt_checkExists)=>{
             }
         }
         if ( action === 'convert'){
-            let convertFunction=showConvertFunctions[newItem];
+            let convertFunction=showConvertFunctions[newItem.type];
             if (convertFunction){
-                convertFunction(history,newItem);
+                convertFunction(pageContext,newItem);
             }
             return;
         }
@@ -816,6 +820,7 @@ export const showFileDialog=(history,item,opt_doneCallback,opt_checkExists)=>{
                 okFunction={actionFunction}
                 current={item}
                 checkName={opt_checkExists}
+                pageContext={pageContext}
             />
         );
     });
