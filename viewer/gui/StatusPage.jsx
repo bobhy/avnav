@@ -254,7 +254,6 @@ class StatusList extends React.Component{
         }
     }
     render(){
-        let store=this.props.pageContext.getStore();
         return <ItemList
             itemClass={(iprops)=><StatusItem
                 connected={this.props.connected}
@@ -264,7 +263,7 @@ class StatusList extends React.Component{
                         this.retriggerQuery();
                     }
                 }
-                store={store}
+                store={this.props.store}
                 {...iprops}/>}
             itemList={this.state.itemList}
             scrollable={true}
@@ -275,6 +274,7 @@ class StatusList extends React.Component{
 }
 
 StatusList.propTypes={
+    store: PropTypes.object.isRequired,
     onChange: PropTypes.func,
     connected: PropTypes.bool,
     allowEdit: PropTypes.bool,
@@ -432,6 +432,7 @@ class StatusPage extends React.Component{
                             return nv;
                         }),1)}
                         reloadNotifier={this.reloadNotifier}
+                        store={store}
                     />
                 }
                 buttonList={buttons}/>

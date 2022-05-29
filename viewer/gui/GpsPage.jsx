@@ -21,6 +21,7 @@ import Dimmer from '../util/dimhandler.js';
 import FullScreen from '../components/Fullscreen';
 import remotechannel, {COMMANDS} from "../util/remotechannel";
 import RemoteChannelDialog from "../components/RemoteChannelDialog";
+import assign from 'object-assign';
 
 const PANEL_LIST=['left','m1','m2','m3','right'];
 //from https://stackoverflow.com/questions/16056591/font-scaling-based-on-width-of-container
@@ -117,6 +118,8 @@ class GpsPage extends React.Component{
         if (oldNum === undefined || ! hasPageEntries(oldNum)){
             store.storeData(keys.gui.gpspage.pageNumber,1);
         }
+        GuiHelpers.storeHelperState(this,store,
+            LayoutHandler.getStoreKeys({pageNumber:keys.gui.gpspage.pageNumber}));
         this.remoteToken=remotechannel.subscribe(COMMANDS.gpsNum,(number)=>{
             let pn=parseInt(number);
             if (pn < 1 || pn > 5) return;
@@ -142,14 +145,8 @@ class GpsPage extends React.Component{
             },
             {
                 name: "Gps1",
-                storeKeys:{
-                    pageNumber:keys.gui.gpspage.pageNumber,
-                    layoutSequence:keys.gui.global.layoutSequence,
-                    isEditing: keys.gui.global.layoutEditing},
-                updateFunction:(state)=>{return {
-                    toggle:state.pageNumber == 1 || state.pageNumber === undefined,
-                    visible: hasPageEntries(1) || state.isEditing
-                }},
+                toggle: this.state.pageNumber === 1 || this.state.pageNumber === undefined,
+                visible: hasPageEntries(1) || this.state.isEditing,
                 onClick:()=>{
                     self.setPageNumber(1);
                 },
@@ -157,14 +154,8 @@ class GpsPage extends React.Component{
             },
             {
                 name: "Gps2",
-                storeKeys:{
-                    pageNumber:keys.gui.gpspage.pageNumber,
-                    layoutSequence:keys.gui.global.layoutSequence,
-                    isEditing: keys.gui.global.layoutEditing},
-                updateFunction:(state)=>{return {
-                    toggle:state.pageNumber == 2,
-                    visible: hasPageEntries(2) || state.isEditing
-                }},
+                toggle: this.state.pageNumber === 2 ,
+                visible: hasPageEntries(2) || this.state.isEditing,
                 onClick:()=>{
                     self.setPageNumber(2);
                 },
@@ -172,14 +163,8 @@ class GpsPage extends React.Component{
             },
             {
                 name: "Gps3",
-                storeKeys:{
-                    pageNumber:keys.gui.gpspage.pageNumber,
-                    layoutSequence:keys.gui.global.layoutSequence,
-                    isEditing: keys.gui.global.layoutEditing},
-                updateFunction:(state)=>{return {
-                    toggle:state.pageNumber == 3,
-                    visible: hasPageEntries(3) || state.isEditing
-                }},
+                toggle: this.state.pageNumber === 3 ,
+                visible: hasPageEntries(3) || this.state.isEditing,
                 onClick:()=>{
                     self.setPageNumber(3);
                 },
@@ -187,14 +172,8 @@ class GpsPage extends React.Component{
             },
             {
                 name: "Gps4",
-                storeKeys:{
-                    pageNumber:keys.gui.gpspage.pageNumber,
-                    layoutSequence:keys.gui.global.layoutSequence,
-                    isEditing: keys.gui.global.layoutEditing},
-                updateFunction:(state)=>{return {
-                    toggle:state.pageNumber == 4,
-                    visible: hasPageEntries(4) || state.isEditing
-                }},
+                toggle: this.state.pageNumber === 4 ,
+                visible: hasPageEntries(4) || this.state.isEditing,
                 onClick:()=>{
                     self.setPageNumber(4);
                 },
@@ -202,14 +181,8 @@ class GpsPage extends React.Component{
             },
             {
                 name: "Gps5",
-                storeKeys:{
-                    pageNumber:keys.gui.gpspage.pageNumber,
-                    layoutSequence:keys.gui.global.layoutSequence,
-                    isEditing: keys.gui.global.layoutEditing},
-                updateFunction:(state)=>{return {
-                    toggle:state.pageNumber == 5,
-                    visible: hasPageEntries(5) || state.isEditing
-                }},
+                toggle: this.state.pageNumber === 5,
+                visible: hasPageEntries(5) || this.state.isEditing,
                 onClick:()=>{
                     self.setPageNumber(5);
                 },
@@ -277,7 +250,7 @@ class GpsPage extends React.Component{
             }
             let panelList=[];
             PANEL_LIST.forEach((panelName)=> {
-                let panelData = getPanelList(panelName, self.props.pageNum || 1);
+                let panelData = getPanelList(panelName, self.state.pageNumber || 1);
                 if (! panelData.list) return;
                 let sum = getWeightSum(panelData.list);
                 let prop={
@@ -325,12 +298,8 @@ class GpsPage extends React.Component{
     }
 }
 
-GpsPage.propTypes={
+GpsPage.propTypes=assign({
     pageNum: PropTypes.number
-};
+},Page.pageProperties);
 
-export default Dynamic(GpsPage,{
-    storeKeys:LayoutHandler.getStoreKeys({
-        pageNum: keys.gui.gpspage.pageNumber,
-    })
-});
+export default GpsPage;
