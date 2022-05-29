@@ -25,7 +25,7 @@ class MainWrapper extends React.Component{
         return <MainPage {...this.props}/>
     }
     componentDidMount(){
-        this.props.history.reset(); //reset history if we reach the mainpage
+        this.props.pageContext.getHistory().reset(); //reset history if we reach the mainpage
     }
 }
 class PageEntry{

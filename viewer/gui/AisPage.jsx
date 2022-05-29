@@ -4,7 +4,6 @@
 
 import Dynamic from '../hoc/Dynamic.jsx';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import PropertyHandler from '../util/propertyhandler.js';
@@ -95,7 +94,7 @@ const sortDialog=(sortField)=>{
 };
 
 const AisItem=(props)=>{
-    let reduceDetails=globalStore.getData(keys.properties.aisReducedList,true);
+    let reduceDetails=props.store.getData(keys.properties.aisReducedList,true);
     let fmt=AisFormatter;
     let fb=fmt.format('passFront',props);
     let style={
@@ -237,7 +236,8 @@ class AisPage extends React.Component{
     }
     render(){
         let self=this;
-        let updateTime=globalStore.getData(keys.properties.aisListUpdateTime,1)*1000;
+        let store=this.props.pageContext.getStore();
+        let updateTime=store.getData(keys.properties.aisListUpdateTime,1)*1000;
         const AisList=Dynamic(ItemList,{minTime:updateTime});
         const Summary=Dynamic(function(props){
             let color=PropertyHandler.getAisColor({
@@ -263,6 +263,7 @@ class AisPage extends React.Component{
                 />
                 <AisList
                     itemClass={MemoAisItem}
+                    itemProperties={{store:store}}
                     onItemClick={function (item) {
                         self.props.history.setOptions({mmsi:item.mmsi});
                         self.props.history.replace('aisinfopage', {mmsi: item.mmsi});

@@ -3,7 +3,6 @@
  */
 
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys,{KeyHelper,PropertyType} from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
@@ -70,7 +69,7 @@ settingsConditions[keys.properties.aisMinDisplaySpeed]=(values)=>
 settingsConditions[keys.properties.boatSteadyMax]=(values)=>
     (values||{})[keys.properties.boatSteadyDetect]
 const sectionConditions={};
-sectionConditions.Remote=()=>globalStore.getData(keys.gui.capabilities.remoteChannel) && window.WebSocket !== undefined;
+sectionConditions.Remote=(store)=>store.getData(keys.gui.capabilities.remoteChannel) && window.WebSocket !== undefined;
 
 
 
@@ -345,6 +344,7 @@ const LayoutItem=(props)=>
 class SettingsPage extends React.Component{
     constructor(props){
         super(props);
+        let store=this.props.pageContext.getStore();
         let self=this;
         this.buttons=[
             {
@@ -360,14 +360,14 @@ class SettingsPage extends React.Component{
                     }
                     let values=self.values.getValues(true);
                     //if the layout changed we need to set it
-                    if (values[keys.properties.layoutName] != globalStore.getData(keys.properties.layoutName)){
+                    if (values[keys.properties.layoutName] != store.getData(keys.properties.layoutName)){
                         if (! LayoutHandler.hasLoaded(values[keys.properties.layoutName])){
                             Toast("layout not loaded, cannot activate it");
                             return;
                         }
                         LayoutHandler.activateLayout();
                     }
-                    globalStore.storeMultiple(values);
+                    store.storeMultiple(values);
                     this.props.history.pop();
                 }
             },
@@ -381,7 +381,7 @@ class SettingsPage extends React.Component{
             },
             {
                 name:'SettingsAndroid',
-                visible: globalStore.getData(keys.gui.global.onAndroid,false),
+                visible: store.getData(keys.gui.global.onAndroid,false),
                 onClick:()=>{
                     self.confirmAbortOrDo().then(()=> {
                         self.resetChanges();
@@ -422,7 +422,7 @@ class SettingsPage extends React.Component{
             {
                 name: 'SettingsSave',
                 onClick:()=>this.saveSettings(),
-                visible: globalStore.getData(keys.properties.connectedMode,false) && globalStore.getData(keys.gui.capabilities.uploadSettings)
+                visible: store.getData(keys.properties.connectedMode,false) && store.getData(keys.gui.capabilities.uploadSettings)
             },
             {
                 name: 'SettingsLoad',
@@ -432,7 +432,7 @@ class SettingsPage extends React.Component{
                         this.loadSettings();
                     });
                 },
-                visible: globalStore.getData(keys.properties.connectedMode,false) && globalStore.getData(keys.gui.capabilities.uploadSettings)
+                visible: store.getData(keys.properties.connectedMode,false) && store.getData(keys.gui.capabilities.uploadSettings)
             },
             Mob.mobDefinition(this.props.history),
             {
@@ -462,7 +462,7 @@ class SettingsPage extends React.Component{
             leftPanelVisible:true,
             section:'Layer'
         };
-        this.values=stateHelper(this,globalStore.getMultiple(this.flattenedKeys));
+        this.values=stateHelper(this,store.getMultiple(this.flattenedKeys));
         this.defaultValues={};
         this.flattenedKeys.forEach((key)=>{
             let description=KeyHelper.getKeyDescriptions()[key];
@@ -487,8 +487,9 @@ class SettingsPage extends React.Component{
         }
     }
     saveSettings(){
+        let store=this.props.pageContext.getStore();
         let actions=ItemActions.create('settings');
-        let oldName=globalStore.getData(keys.properties.lastLoadedName).replace(/-*[0-9]*$/,'');
+        let oldName=store.getData(keys.properties.lastLoadedName).replace(/-*[0-9]*$/,'');
         let suffix=Formatter.formatDateTime(new Date()).replace(/[: /]/g,'').replace(/--/g,'');
         let proposedName=actions.nameForUpload(oldName+"-"+suffix);
         PropertyHandler.listSettings(true)
@@ -517,7 +518,7 @@ class SettingsPage extends React.Component{
                 )
             })
             .then((res)=> {
-                globalStore.storeData(keys.properties.lastLoadedName,proposedName);
+                store.storeData(keys.properties.lastLoadedName,proposedName);
                 Toast("settings saved");
             })
             .catch((e)=>{
@@ -526,7 +527,8 @@ class SettingsPage extends React.Component{
 
     }
     loadSettings(){
-        loadSettings(this.values.getState(),globalStore.getData(keys.properties.lastLoadedName))
+        let store=this.props.pageContext.getStore();
+        loadSettings(this.values.getState(),store.getData(keys.properties.lastLoadedName))
             .then((settings)=>this.values.setState(settings,true))
             .catch((e)=>{
                 if (e) Toast(e);
@@ -543,7 +545,8 @@ class SettingsPage extends React.Component{
     }
 
     resetChanges(){
-        this.values.setState(globalStore.getMultiple(this.flattenedKeys),true);
+        let store=this.props.pageContext.getStore();
+        this.values.setState(store.getMultiple(this.flattenedKeys),true);
     }
 
     handleLayoutClick(){
@@ -624,6 +627,7 @@ class SettingsPage extends React.Component{
     }
     MainContent(props){
         let self=this;
+        let store=this.props.pageContext.getStore();
         let leftVisible = props.leftPanelVisible;
         let rightVisible = !props.small || !props.leftPanelVisible;
         let leftClass = "sectionList";
@@ -633,7 +637,7 @@ class SettingsPage extends React.Component{
         for (let s in settingsSections) {
             let sectionCondition=sectionConditions[s];
             if (sectionCondition !== undefined){
-                if (! sectionCondition()) continue;
+                if (! sectionCondition(store)) continue;
             }
             let item = {name: s};
             if (s === currentSection) item.activeItem = true;
@@ -656,7 +660,7 @@ class SettingsPage extends React.Component{
             for (let s in settingsSections[section]) {
                 let key = settingsSections[section][s];
                 if (settingsConditions[key] !== undefined){
-                    if (! settingsConditions[key](self.values.getValues())) continue;
+                    if (! settingsConditions[key](self.values.getValues(),store)) continue;
                 }
                 let description = KeyHelper.getKeyDescriptions()[key];
                 let value=self.values.getValue(key);

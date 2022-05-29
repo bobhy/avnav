@@ -5,7 +5,6 @@
 import Dynamic from '../hoc/Dynamic.jsx';
 import AisData from '../nav/aisdata.js';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
@@ -120,12 +119,13 @@ class AisInfoPage extends React.Component{
         this.timer.startTimer(timerSequence);
     }
     drawIcon(canvas,current){
+        let store=this.props.pageContext.getStore();
         if (! canvas) return;
         if (! current) return;
         let drawing=new Drawing({
             coordToPixel:(p)=>{return p;},
             pixelToCoord:(p)=>{return p;}
-        },globalStore.getData(keys.properties.style.useHdpi,false));
+        },store.getData(keys.properties.style.useHdpi,false));
         let ctx=canvas.getContext('2d');
         drawing.setContext(ctx);
         let rect=canvas.getBoundingClientRect();

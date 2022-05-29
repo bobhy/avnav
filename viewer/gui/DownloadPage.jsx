@@ -5,7 +5,6 @@
 import Dynamic from '../hoc/Dynamic.jsx';
 import Button from '../components/Button.jsx';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
@@ -106,8 +105,7 @@ const itemSort=(a,b)=>{
 
 
 const DownloadItem=(props)=>{
-
-    let actions=ItemActions.create(props,globalStore.getData(keys.properties.connectedMode,false));
+    let actions=ItemActions.create(props,props.store.getData(keys.properties.connectedMode,false));
     let  cls="listEntry "+actions.className;
     let dataClass="downloadItemData";
     if (! actions.showDelete ) dataClass+=" noDelete";
@@ -226,7 +224,8 @@ class DownloadPage extends React.Component{
         this.fillData();
     }
     componentDidMount() {
-        if (!globalStore.getData(keys.gui.capabilities.uploadImport)) return;
+        let store=this.props.pageContext.getStore();
+        if (!store.getData(keys.gui.capabilities.uploadImport)) return;
         Requests.getJson({
             request:'api',
             type:'import',
@@ -326,9 +325,10 @@ class DownloadPage extends React.Component{
     };
 
     getButtonParam(bName,bType,overflow, opt_capability){
+        let store=this.props.pageContext.getStore();
         let visible=this.state.type === bType || ! (this.props.options && this.props.options.allowChange === false);
         if (opt_capability){
-            visible = visible && globalStore.getData(opt_capability,false);
+            visible = visible && store.getData(opt_capability,false);
         }
         return {
             name: bName,
@@ -339,6 +339,7 @@ class DownloadPage extends React.Component{
         };
     }
     getButtons(){
+        let store=this.props.pageContext.getStore();
         let allowTypeChange=! (this.props.options && this.props.options.allowChange === false);
         let rt=[
             this.getButtonParam('DownloadPageCharts','chart'),
@@ -352,14 +353,14 @@ class DownloadPage extends React.Component{
             {
                 name:'DownloadPageUpload',
                 visible: (this.state.type === 'route' || this.state.type.type === 'layout'
-                    || (this.state.type ==='chart' && globalStore.getData(keys.gui.capabilities.uploadCharts,false))
-                    || (this.state.type === 'user' && globalStore.getData(keys.gui.capabilities.uploadUser,false))
-                    || (this.state.type === 'images' && globalStore.getData(keys.gui.capabilities.uploadImages,false))
-                    || (this.state.type === 'overlay' && globalStore.getData(keys.gui.capabilities.uploadOverlays,false))
-                    || (this.state.type === 'settings' && globalStore.getData(keys.gui.capabilities.uploadOverlays,false))
-                    || (this.state.type === 'layout' && globalStore.getData(keys.gui.capabilities.uploadLayout,false))
-                    || (this.state.type === 'track' && globalStore.getData(keys.gui.capabilities.uploadTracks,false))) &&
-                    globalStore.getData(keys.properties.connectedMode,true),
+                    || (this.state.type ==='chart' && store.getData(keys.gui.capabilities.uploadCharts,false))
+                    || (this.state.type === 'user' && store.getData(keys.gui.capabilities.uploadUser,false))
+                    || (this.state.type === 'images' && store.getData(keys.gui.capabilities.uploadImages,false))
+                    || (this.state.type === 'overlay' && store.getData(keys.gui.capabilities.uploadOverlays,false))
+                    || (this.state.type === 'settings' && store.getData(keys.gui.capabilities.uploadOverlays,false))
+                    || (this.state.type === 'layout' && store.getData(keys.gui.capabilities.uploadLayout,false))
+                    || (this.state.type === 'track' && store.getData(keys.gui.capabilities.uploadTracks,false))) &&
+                    store.getData(keys.properties.connectedMode,true),
                 onClick:()=>{
                     this.setState({uploadSequence:this.state.uploadSequence+1});
                 }
@@ -539,6 +540,7 @@ class DownloadPage extends React.Component{
             .catch(()=>{})
     };
     render(){
+        let store=this.props.pageContext.getStore();
         let self=this;
         let localDoneFunction=this.getLocalUploadFunction();
         return (
@@ -547,6 +549,7 @@ class DownloadPage extends React.Component{
                 id="downloadpage"
                 mainContent={<React.Fragment>
                         <ItemList
+                            itemProperties={{store:store}}
                             itemClass={DownloadItem}
                             scrollable={true}
                             itemList={this.state.items}

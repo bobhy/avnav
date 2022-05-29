@@ -4,7 +4,6 @@
 
 import Dynamic from '../hoc/Dynamic.jsx';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
@@ -28,11 +27,12 @@ const AddressItem=(props)=>{
 class AddressPage extends React.Component{
     constructor(props){
         super(props);
+        let store=this.props.pageContext.getStore();
         let self=this;
         this.buttons=[
             {
                 name:'AndroidBrowser',
-                visible: globalStore.getData(keys.gui.global.onAndroid),
+                visible: store.getData(keys.gui.global.onAndroid),
                 onClick:()=>{avnav.android.launchBrowser();}
             },
             Mob.mobDefinition(this.props.history),
@@ -45,6 +45,7 @@ class AddressPage extends React.Component{
         this.doQuery=this.doQuery.bind(this);
     }
     doQuery(){
+        let store=this.props.pageContext.getStore();
         let currentSequence=this.querySequence;
         let self=this;
         Requests.getJson("?request=status",{checkOk:false}).then(
@@ -60,13 +61,13 @@ class AddressPage extends React.Component{
                         }
                     });
                 }
-                globalStore.storeData(keys.gui.addresspage.addressList,list);
-                self.timer=window.setTimeout(self.doQuery,globalStore.getData(keys.properties.statusQueryTimeout));
+                store.storeData(keys.gui.addresspage.addressList,list);
+                self.timer=window.setTimeout(self.doQuery,store.getData(keys.properties.statusQueryTimeout));
             },
             (error)=>{
                 if (self.querySequence != currentSequence) return;
-                globalStore.storeData(keys.gui.addresspage.addressList,[]);
-                self.timer=window.setTimeout(self.doQuery,globalStore.getData(keys.properties.statusQueryTimeout));
+                store.storeData(keys.gui.addresspage.addressList,[]);
+                self.timer=window.setTimeout(self.doQuery,store.getData(keys.properties.statusQueryTimeout));
             });
     }
     componentDidMount(){

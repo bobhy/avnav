@@ -2,7 +2,6 @@
  * Created by andreas on 02.05.14.
  */
 
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import MapPage, {overlayDialog} from '../components/MapPage.jsx';
@@ -313,6 +312,7 @@ const DEFAULT_ROUTE="default";
 class EditRoutePage extends React.Component{
     constructor(props){
         super(props);
+        let store=this.props.pageContext.getStore();
         this.hasCentered=false;
         this.state={
             showWpButtons:false,
@@ -324,10 +324,10 @@ class EditRoutePage extends React.Component{
         this.checkEmptyRoute();
         this.wpTimer=GuiHelpers.lifecycleTimer(this,()=>{
             this.setState({showWpButtons:false});
-        },globalStore.getData(keys.properties.wpButtonTimeout)*1000);
+        },store.getData(keys.properties.wpButtonTimeout)*1000);
         RouteHandler.setCurrentRoutePage(PAGENAME);
         this.widgetClick=this.widgetClick.bind(this);
-        GuiHelpers.storeHelperState(this,this.props.store,{
+        GuiHelpers.storeHelperState(this,store,{
             activeRouteName: keys.nav.routeHandler.activeName,
             dimensions:keys.gui.global.windowDimensions
         });
@@ -366,9 +366,10 @@ class EditRoutePage extends React.Component{
     }
 
     widgetClick(item,data,panel,invertEditDirection){
+        let store=this.props.pageContext.getStore();
         let currentEditor=getCurrentEditor();
         if (item.name === "EditRoute"){
-            if (globalStore.getData(keys.gui.global.layoutEditing)) return;
+            if (store.getData(keys.gui.global.layoutEditing)) return;
             OverlayDialog.dialog((props)=>{
                 return <EditRouteDialog
                     {...props}
@@ -383,7 +384,7 @@ class EditRoutePage extends React.Component{
             return;
         }
         if (item.name === 'RoutePoints'){
-            if (globalStore.getData(keys.gui.global.layoutEditing)) return;
+            if (store.getData(keys.gui.global.layoutEditing)) return;
             if (data && data.idx !== undefined){
                 let lastSelected=currentEditor.getIndex();
                 currentEditor.setNewIndex(data.idx);
@@ -398,8 +399,8 @@ class EditRoutePage extends React.Component{
         }
         if (EditWidgetDialog.createDialog(item,PAGENAME,panel,{beginning:invertEditDirection,types:["!map"]})) return;
         if (panel == 'bottomRight'){
-            if (! globalStore.getData(keys.nav.gps.valid)) return;
-            let boatPos=globalStore.getData(keys.nav.gps.position);
+            if (! store.getData(keys.nav.gps.valid)) return;
+            let boatPos=store.getData(keys.nav.gps.position);
             MapHolder.setCenter(boatPos);
             return;
         }
@@ -708,8 +709,9 @@ class EditRoutePage extends React.Component{
     }
     render(){
         let self=this;
+        let store=this.props.pageContext.getStore();
         let isSmall=(this.state.dimensions||{width:0}).width
-            < globalStore.getData(keys.properties.smallBreak);
+            < store.getData(keys.properties.smallBreak);
         let overlayContent=(isSmall || this.state.showWpButtons)?
             <ButtonList
                 itemList={this.getWaypointButtons()}

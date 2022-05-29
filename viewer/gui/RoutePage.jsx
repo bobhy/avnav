@@ -4,7 +4,6 @@
 
 import Dynamic from '../hoc/Dynamic.jsx';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys,{KeyHelper} from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
@@ -114,35 +113,7 @@ const checkWritable=()=>{
     return true;
 };
 
-const onHeadingClick=()=> {
-    if (!editor.hasRoute()) return;
-    const okCallback = (values, closeFunction)=> {
-        if (! editor.hasRoute()) return;
-        let name = values.name || "";
-        if (name == editor.getRouteName()) return true;
-        if (name != globalStore.getData(keys.gui.routepage.initialName)) {
-            //check if a route with this name already exists
-            RouteHandler.fetchRoute(name, false,
-                (data)=> {
-                    Toast("route with name " + name + " already exists");
-                },
-                (er)=> {
-                    let newRoute = editor.getRoute().clone();
-                    newRoute.setName(name);
-                    if (!values.copyPoints) {
-                        newRoute.points = [];
-                    }
-                    if (!globalStore.getData(keys.properties.connectedMode, false)) newRoute.server = false;
-                    editor.setRouteAndIndex(newRoute,-1);
-                    closeFunction();
-                });
-            return false;
-        }
-        return true;
-    };
-    OverlayDialog.dialog(createNewRouteDialog(editor.getRouteName(),
-        okCallback));
-};
+
 
 
 const startWaypointDialog=(rawitem,index)=>{
@@ -173,28 +144,10 @@ const startWaypointDialog=(rawitem,index)=>{
     OverlayDialog.dialog(RenderDialog);
 };
 
-const storeRoute=(route,startNav)=>{
-    if (globalStore.getData(keys.gui.routepage.initialName,"") != route.name){
-        route.server=globalStore.getData(keys.properties.connectedMode,false);
-    }
-
-    let current=editor.getPointAt();
-    if (current) MapHolder.setCenter(current);
-    editor.setNewRoute(route); //potentially we changed the server flag - so write it again
-    editor.setNewIndex(editor.getIndexFromPoint(current,true));
-    editor.syncTo(RouteEdit.MODES.EDIT);
-    if (isActiveRoute()){
-        activeRoute.setNewRoute(route);
-    }
-    if (startNav && current){
-            RouteHandler.wpOn(current,true);
-    }
-    return true;
-};
-
 class RoutePage extends React.Component{
     constructor(props){
         super(props);
+        let store=this.props.pageContext.getStore();
         let self=this;
         this.listRef=undefined;
         this.buttons=[
@@ -234,7 +187,7 @@ class RoutePage extends React.Component{
                             RouteHandler.fetchRoute(item.name,!item.server,
                                 (route)=>{
                                     editor.setRouteAndIndex(route,0);
-                                    globalStore.storeData(keys.gui.routepage.initialName,route.name);
+                                    store.storeData(keys.gui.routepage.initialName,route.name);
                                     this.props.history.pop();
                                 },
                                 function(err){
@@ -252,7 +205,8 @@ class RoutePage extends React.Component{
             }
         ];
         this.storeRouteAndReturn=this.storeRouteAndReturn.bind(this);
-        globalStore.storeData(keys.gui.routepage.initialName,editor.getRouteName());
+        this.onHeadingClick=this.onHeadingClick.bind(this);
+        store.storeData(keys.gui.routepage.initialName,editor.getRouteName());
         RouteHandler.setCurrentRoutePage(PAGENAME);
     }
 
@@ -269,15 +223,65 @@ class RoutePage extends React.Component{
         RouteHandler.unsetCurrentRoutePage(PAGENAME);
     }
 
+    onHeadingClick(){
+        let store=this.props.pageContext.getStore();
+        if (!editor.hasRoute()) return;
+        const okCallback = (values, closeFunction)=> {
+            if (! editor.hasRoute()) return;
+            let name = values.name || "";
+            if (name == editor.getRouteName()) return true;
+            if (name != store.getData(keys.gui.routepage.initialName)) {
+                //check if a route with this name already exists
+                RouteHandler.fetchRoute(name, false,
+                    (data)=> {
+                        Toast("route with name " + name + " already exists");
+                    },
+                    (er)=> {
+                        let newRoute = editor.getRoute().clone();
+                        newRoute.setName(name);
+                        if (!values.copyPoints) {
+                            newRoute.points = [];
+                        }
+                        if (!store.getData(keys.properties.connectedMode, false)) newRoute.server = false;
+                        editor.setRouteAndIndex(newRoute,-1);
+                        closeFunction();
+                    });
+                return false;
+            }
+            return true;
+        };
+        OverlayDialog.dialog(createNewRouteDialog(editor.getRouteName(),
+            okCallback));
+    }
 
     storeRouteAndReturn(startNav){
+        let store=this.props.pageContext.getStore();
+        const storeRoute=(route,startNav)=>{
+            if (store.getData(keys.gui.routepage.initialName,"") != route.name){
+                route.server=store.getData(keys.properties.connectedMode,false);
+            }
+
+            let current=editor.getPointAt();
+            if (current) MapHolder.setCenter(current);
+            editor.setNewRoute(route); //potentially we changed the server flag - so write it again
+            editor.setNewIndex(editor.getIndexFromPoint(current,true));
+            editor.syncTo(RouteEdit.MODES.EDIT);
+            if (isActiveRoute()){
+                activeRoute.setNewRoute(route);
+            }
+            if (startNav && current){
+                RouteHandler.wpOn(current,true);
+            }
+            return true;
+        };
+
         if (!editor.hasRoute()){
             this.props.history.pop();
             return;
         }
         let currentName=editor.getRouteName();
         let current=editor.getRoute();
-        if (currentName != globalStore.getData(keys.gui.routepage.initialName,"") ){
+        if (currentName != store.getData(keys.gui.routepage.initialName,"") ){
             //check if a route with this name already exists
             RouteHandler.fetchRoute(currentName,!current.server,
                 function(data){

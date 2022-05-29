@@ -4,7 +4,6 @@
 
 import Dynamic from '../hoc/Dynamic.jsx';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -149,14 +148,15 @@ class WpaPage extends React.Component{
 
     doQuery(timerSequence){
         let self=this;
+        let store=this.props.pageContext.getStore();
         Requests.getJson("?request=wpa&command=all",{
             sequenceFunction:this.timer.currentSequence,
             timeout: timeout*0.9,
             checkOk: false
         }).then((json)=>{
             self.numErrors=0;
-            globalStore.storeData(keys.gui.wpapage.interface,json.status);
-            globalStore.storeData(keys.gui.wpapage.showAccess,json.showAccess);
+            store.storeData(keys.gui.wpapage.interface,json.status);
+            store.storeData(keys.gui.wpapage.showAccess,json.showAccess);
             let itemList=[];
             if (json.status && json.list) {
                 for (let i in json.list) {
@@ -179,7 +179,7 @@ class WpaPage extends React.Component{
                     itemList.push(displayItem);
                 }
             }
-            globalStore.storeData(keys.gui.wpapage.wpaItems,itemList);
+            store.storeData(keys.gui.wpapage.wpaItems,itemList);
             self.timer.startTimer(timerSequence);
 
         }).catch((error)=>{

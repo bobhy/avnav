@@ -29,6 +29,7 @@ import NavData from './nav/navdata';
 import {getPageForName} from "./gui/PageList";
 import Store from "./util/store";
 import alarmhandler from "./nav/alarmhandler.js";
+import PageContext from "./gui/PageContext";
 
 
 
@@ -66,7 +67,7 @@ class Router extends Component {
         super(props);
     }
     render() {
-        let Page=getPageForName(this.props.location,true);
+        let Page=getPageForName(History.getLocationFromState(this.props.location),true);
         if (Page === undefined){
             Page=Other;
         }
@@ -80,10 +81,10 @@ class Router extends Component {
             {this.props.dim ? <div className="dimm" style={dimStyle} onClick={Dimmer.trigger}></div>:null}
                 <Page
                     style={style}
-                    options={this.props.options}
-                    location={this.props.location}
-                    history={this.props.history}
-                    store={this.props.store}
+                    location={History.getLocationFromState(this.props.location)}
+                    options={History.getOptionsFromState(this.props.location)}
+                    pageContext={this.props.pageContext}
+                    history={this.props.pageContext.getHistory()}
                     small={small}
                     isEditing={this.props.isEditing}
                 />
@@ -167,6 +168,8 @@ class App extends React.Component {
         if (firstStart){
             propertyHandler.firstStart();
         }
+        this.pageContext=new PageContext(this.store,this.history);
+        this.secondPageContext=new PageContext(this.secondStore,this.secondHistory);
         GuiHelpers.storeHelperState(this,this.store,
             {location:keys.gui.global.currentLocation});
         GuiHelpers.storeHelperState(this,this.secondStore,
@@ -355,10 +358,8 @@ class App extends React.Component {
                 isEditing:keys.gui.global.layoutEditing
                 },keys.gui.capabilities)
             }
-                location={History.getLocationFromState(this.state.location)}
-                options={History.getOptionsFromState(this.state.location)}
-                history={this.history}
-                store={this.store}
+                pageContext={this.pageContext}
+                location={this.state.location}
                 nightMode={this.props.nightMode}
                 />
             <Dialogs

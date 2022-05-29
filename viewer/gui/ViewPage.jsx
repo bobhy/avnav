@@ -2,7 +2,6 @@
  * Created by andreas on 02.05.14.
  */
 
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import helper from '../util/helper.js';
 import React from 'react';
@@ -177,8 +176,9 @@ class ViewPageBase extends React.Component{
         return language;
     }
     getUrl(includeNavUrl){
+        let store=this.props.pageContext.getStore();
         if (this.url) return this.url;
-        return (includeNavUrl?globalStore.getData(keys.properties.navUrl):"")+"?request=download&type="+this.type+"&name="+encodeURIComponent(this.name);
+        return (includeNavUrl?store.getData(keys.properties.navUrl):"")+"?request=download&type="+this.type+"&name="+encodeURIComponent(this.name);
     }
     componentDidMount(){
         let self=this;

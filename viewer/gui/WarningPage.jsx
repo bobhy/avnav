@@ -8,7 +8,6 @@ import React from 'react';
 import Page from '../components/Page.jsx';
 import Requests from '../util/requests.js';
 import keys, {KeyHelper} from '../util/keys.jsx';
-import globalStore from '../util/globalstore.jsx';
 import PropertyHandler from '../util/propertyhandler';
 import loadSettings from "../components/LoadSettingsDialog";
 import LayoutHandler from "../util/layouthandler";
@@ -26,15 +25,16 @@ class WarningPage extends React.Component{
         },(error)=>{});
     }
     okFunction(){
+        let store=this.props.pageContext.getStore();
         if (window.localStorage){
-            window.localStorage.setItem(globalStore.getData(keys.properties.licenseAcceptedName),"true");
+            window.localStorage.setItem(store.getData(keys.properties.licenseAcceptedName),"true");
         }
         let flattenedKeys=KeyHelper.flattenedKeys(keys.properties);
         PropertyHandler.listSettings(true)
             .then(
                 (settingsList)=>{
                     if (settingsList && settingsList.length > 1){
-                        return loadSettings(globalStore.getMultiple(flattenedKeys),
+                        return loadSettings(store.getMultiple(flattenedKeys),
                             settingsList[0].value,
                             "Select initial Settings")
                     }
@@ -46,14 +46,14 @@ class WarningPage extends React.Component{
                     return Promise.reject();
                 })
             .then((values)=>{
-                if (values[keys.properties.layoutName] !== globalStore.getData(keys.properties.layoutName)){
+                if (values[keys.properties.layoutName] !== store.getData(keys.properties.layoutName)){
                     if (! LayoutHandler.hasLoaded(values[keys.properties.layoutName])){
                         Promise.reject("layout not loaded, cannot activate it");
                         return;
                     }
                     LayoutHandler.activateLayout();
                 }
-                globalStore.storeMultiple(values);
+                store.storeMultiple(values);
                 return 0;
             })
             .then((r)=>this.props.history.replace('mainpage'))

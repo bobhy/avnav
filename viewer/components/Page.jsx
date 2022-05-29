@@ -37,6 +37,7 @@ const ButtonShade=Dynamic((props)=>{
 class Page extends React.Component {
     constructor(props){
         super(props);
+        let store=this.props.pageContext.getStore();
         this.alarmWidget=WidgetFactory.createWidget({name:'Alarm'});
         this.userEvent=this.userEvent.bind(this);
         this.timerCallback=this.timerCallback.bind(this);
@@ -46,7 +47,7 @@ class Page extends React.Component {
             hideButtons:false,
             connectionLost:globalStore.getData(keys.nav.gps.connectionLost)
         }
-        GuiHelpers.storeHelper(this,this.props.store,(data)=>{
+        GuiHelpers.storeHelper(this,store,(data)=>{
             this.setState(data)
         },{connectionLost: keys.nav.gps.connectionLost});
     }
@@ -118,10 +119,9 @@ class Page extends React.Component {
 Page.pageProperties={
     className: PropTypes.string,
     style: PropTypes.object,
-    options: PropTypes.object,
     location: PropTypes.string.isRequired,
-    history: PropTypes.object.isRequired,
-    store: PropTypes.object.isRequired,
+    options: PropTypes.object,
+    pageContext: PropTypes.object.isRequired,
     small: PropTypes.bool.isRequired
 }
 Page.propTypes=assign({},Page.pageProperties,{

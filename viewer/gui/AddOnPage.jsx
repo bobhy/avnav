@@ -3,7 +3,6 @@
  */
 
 import Dynamic from '../hoc/Dynamic.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
@@ -32,19 +31,20 @@ class AddOnPage extends React.Component{
         this.state={
             addOns:[]
         };
+        let store=this.props.pageContext.getStore();
         this.buildButtonList=this.buildButtonList.bind(this);
         if (this.props.options && this.props.options.activeAddOn !== undefined){
-            globalStore.storeData(keys.gui.addonpage.activeAddOn,this.props.options.activeAddOn);
+            store.storeData(keys.gui.addonpage.activeAddOn,this.props.options.activeAddOn);
         }
-        if (globalStore.getData(keys.gui.addonpage.activeAddOn) === undefined){
-            globalStore.storeData(keys.gui.addonpage.activeAddOn,0);
+        if (store.getData(keys.gui.addonpage.activeAddOn) === undefined){
+            store.storeData(keys.gui.addonpage.activeAddOn,0);
         }
         this.remoteToken=remotechannel.subscribe(COMMANDS.addOn,(number)=>{
             let i=parseInt(number);
             if (i < 0 || i >= this.state.addOns.length) return;
-            globalStore.storeData(keys.gui.addonpage.activeAddOn, -1);
+            store.storeData(keys.gui.addonpage.activeAddOn, -1);
             window.setTimeout(()=> {
-                globalStore.storeData(keys.gui.addonpage.activeAddOn, i);
+                store.storeData(keys.gui.addonpage.activeAddOn, i);
             },100);
         })
         this.blockIds={};
@@ -74,28 +74,30 @@ class AddOnPage extends React.Component{
 
     componentDidMount(){
         let self=this;
+        let store=this.props.pageContext.getStore();
         Addons.readAddOns(true)
             .then((items)=>{
-                let currenIndex=globalStore.getData(keys.gui.addonpage.activeAddOn);
+                let currenIndex=store.getData(keys.gui.addonpage.activeAddOn);
                 if (self.props.options && self.props.options.addonName){
                     for (let i=0;i<items.length;i++){
                         if (items[i].name == self.props.options.addonName){
                             if (i != currenIndex){
                                 currenIndex=i;
-                                globalStore.storeData(keys.gui.addonpage.activeAddOn,i);
+                                store.storeData(keys.gui.addonpage.activeAddOn,i);
                             }
                             break;
                         }
                     }
                 }
                 if (currenIndex === undefined || currenIndex < 0 || currenIndex >= items.length){
-                    globalStore.storeData(keys.gui.addonpage.activeAddOn,0);
+                    store.storeData(keys.gui.addonpage.activeAddOn,0);
                 }
                 self.setState({addOns:items})
             })
             .catch(()=>{});
     }
     buildButtonList(addOns,activeIndex){
+        let store=this.props.pageContext.getStore();
         let rt = [];
         if (addOns) {
             for (let i = 0; i < addOns.length; i++) {
@@ -110,14 +112,14 @@ class AddOnPage extends React.Component{
                             return;
                         }
                         //first unload the iframe completely to avoid pushing to the history
-                        globalStore.storeData(keys.gui.addonpage.activeAddOn, -1);
+                        store.storeData(keys.gui.addonpage.activeAddOn, -1);
                         window.setTimeout(()=> {
-                            globalStore.storeData(keys.gui.addonpage.activeAddOn, i);
+                            store.storeData(keys.gui.addonpage.activeAddOn, i);
                         },100);
                     },
                     toggle: activeIndex == i,
                     overflow: true,
-                    visible: addOn.newWindow !== 'true' || addOn.url.match(/^http/) || ! globalStore.getData(keys.gui.global.onAndroid,false)
+                    visible: addOn.newWindow !== 'true' || addOn.url.match(/^http/) || ! store.getData(keys.gui.global.onAndroid,false)
                 };
                 rt.push(button);
             }

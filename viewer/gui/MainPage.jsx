@@ -4,7 +4,6 @@
 
 import Button from '../components/Button.jsx';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
@@ -25,10 +24,10 @@ import {RecursiveCompare} from '../util/compare';
 
 
 
-const getImgSrc=function(color){
-    if (color == "red") return globalStore.getData(keys.properties.statusErrorImage);
-    if (color == "green") return globalStore.getData(keys.properties.statusOkImage);
-    if (color == "yellow")return globalStore.getData(keys.properties.statusYellowImage);
+const getImgSrc=function(color,store){
+    if (color == "red") return store.getData(keys.properties.statusErrorImage);
+    if (color == "green") return store.getData(keys.properties.statusOkImage);
+    if (color == "yellow")return store.getData(keys.properties.statusYellowImage);
 };
 
 class BottomLine extends React.Component {
@@ -37,7 +36,7 @@ class BottomLine extends React.Component {
             this.state = {status:{}};
             this.timer = GuiHelper.lifecycleTimer(this,
                 this.timerCall,
-                globalStore.getData(keys.properties.positionQueryTimeout), true);
+                this.props.store.getData(keys.properties.positionQueryTimeout), true);
             this.timerCall = this.timerCall.bind(this);
             GuiHelper.storeHelperState(this,this.props.store,{
                 valid: keys.nav.gps.valid,
@@ -82,11 +81,11 @@ class BottomLine extends React.Component {
                     <div className='inner'>
                         <div className='status'>
                             <div >
-                                <img className='status_image' src={getImgSrc(nmeaColor)}/>
+                                <img className='status_image' src={getImgSrc(nmeaColor,this.props.store)}/>
                                 NMEA&nbsp;{nmeaText}
                             </div>
                             {!this.state.connectionLost ? <div >
-                                <img className='status_image' src={getImgSrc(aisColor)}/>
+                                <img className='status_image' src={getImgSrc(aisColor,this.props.store)}/>
                                 AIS&nbsp;{aisText}
                             </div> : null
                             }
@@ -106,6 +105,7 @@ class BottomLine extends React.Component {
 class MainPage extends React.Component {
     constructor(props) {
         super(props);
+        let store=this.props.pageContext.getStore();
         this.state={
             chartList:[],
             addOns:[],
@@ -114,10 +114,10 @@ class MainPage extends React.Component {
             overlays:{}
         };
         this.fillList=this.fillList.bind(this);
-        GuiHelper.storeHelper(this,this.props.store,(data)=>{
+        GuiHelper.storeHelper(this,store,(data)=>{
             this.readAddOns();
         },{sequence:keys.gui.global.reloadSequence},2);
-        GuiHelper.storeHelper(this,this.props.store,(data)=>{
+        GuiHelper.storeHelper(this,store,(data)=>{
             this.fillList();
         },{sequence:keys.gui.global.reloadSequence});
         this.timer=GuiHelper.lifecycleTimer(this,(sequence)=>{
@@ -157,6 +157,7 @@ class MainPage extends React.Component {
 
 
     getButtons() {
+        let store=this.props.pageContext.getStore();
         return [
             {
                 name: 'ShowStatus',
@@ -189,9 +190,9 @@ class MainPage extends React.Component {
                     }
                 },
                 onClick: ()=> {
-                    let con = globalStore.getData(keys.properties.connectedMode, false);
+                    let con = store.getData(keys.properties.connectedMode, false);
                     con = !con;
-                    globalStore.storeData(keys.properties.connectedMode, con);
+                    store.storeData(keys.properties.connectedMode, con);
                 },
                 editDisable: true,
                 overflow: true
@@ -206,9 +207,9 @@ class MainPage extends React.Component {
                 name: 'Night',
                 storeKeys: {toggle: keys.properties.nightMode},
                 onClick: ()=> {
-                    let mode = globalStore.getData(keys.properties.nightMode, false);
+                    let mode = store.getData(keys.properties.nightMode, false);
                     mode = !mode;
-                    globalStore.storeData(keys.properties.nightMode, mode);
+                    store.storeData(keys.properties.nightMode, mode);
                 }
             },
             Mob.mobDefinition(this.props.history),
@@ -253,12 +254,13 @@ class MainPage extends React.Component {
     }
 
     ChartItem(props){
+        let store=this.props.pageContext.getStore();
         let self=this;
         let cls="chartItem";
         if (props.selected) cls+=" activeEntry";
         if (props.originalScheme) cls+=" userAction";
         cls+=props.hasOverlays?" withOverlays":" noOverlays";
-        let isConnected=globalStore.getData(keys.properties.connectedMode,false);
+        let isConnected=store.getData(keys.properties.connectedMode,false);
         return (
             <div className={cls} onClick={props.onClick}>
                 <img src={props.icon||chartImage}/>
@@ -279,7 +281,8 @@ class MainPage extends React.Component {
 
 
     componentDidMount() {
-        globalStore.storeData(keys.gui.global.soundEnabled,true);
+        let store=this.props.pageContext.getStore();
+        store.storeData(keys.gui.global.soundEnabled,true);
     }
 
     selectChart(offset){
@@ -317,7 +320,8 @@ class MainPage extends React.Component {
 
     }
     fillList(sequence) {
-        Requests.getJson("?request=list&type=chart",{timeout:3*parseFloat(globalStore.getData(keys.properties.networkTimeout))}).then((json)=>{
+        let store=this.props.pageContext.getStore();
+        Requests.getJson("?request=list&type=chart",{timeout:3*parseFloat(store.getData(keys.properties.networkTimeout))}).then((json)=>{
                 let items = [];
                 let current=mapholder.getBaseChart();
                 let lastChartKey=current?current.getChartKey():mapholder.getLastChartKey();
@@ -387,6 +391,7 @@ class MainPage extends React.Component {
 
     render() {
         let self = this;
+        let store=this.props.pageContext.getStore();
         return (
             <Page
                 {...self.props}
@@ -410,7 +415,7 @@ class MainPage extends React.Component {
                         }
                   bottomContent={
                     <BottomLine
-                        store={self.props.store}
+                        store={store}
                     />
                     }
                   buttonList={self.getButtons()}

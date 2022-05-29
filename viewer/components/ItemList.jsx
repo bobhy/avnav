@@ -83,7 +83,7 @@ class ItemList extends React.Component{
                  }}
             >
                 {props.allitems.map(function (entry) {
-                    let itemProps = assign({}, entry);
+                    let itemProps = assign({},self.props.itemProperties, entry);
                     let key = getKey(entry);
                     //we allow for multiple items with the same name
                     //we try at most 20 times to get a unique key by appending _idx
@@ -173,6 +173,7 @@ ItemList.propTypes={
                                         //1st: the item description, 2nd: the data provided by the item
         itemClass:      PropTypes.any, //one of itemClass or itemCreator must be set
         itemCreator:    PropTypes.func,
+        itemProperties: PropTypes.object,
         itemList:       PropTypes.array,
         className:      PropTypes.string,
         scrollable:     PropTypes.bool,

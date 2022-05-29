@@ -4,7 +4,6 @@
 
 import Dynamic from '../hoc/Dynamic.jsx';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -95,6 +94,7 @@ const layoutBaseParam={
 class GpsPage extends React.Component{
     constructor(props){
         super(props);
+        let store=this.props.pageContext.getStore();
         let self=this;
         this.buttons=[
             {
@@ -110,12 +110,12 @@ class GpsPage extends React.Component{
         if (props.options && props.options.widget && ! props.options.returning) {
             let pagenNum = findPageWithWidget(props.options.widget);
             if (pagenNum !== undefined){
-                globalStore.storeData(keys.gui.gpspage.pageNumber,pagenNum);
+                store.storeData(keys.gui.gpspage.pageNumber,pagenNum);
             }
         }
-        let oldNum=globalStore.getData(keys.gui.gpspage.pageNumber);
+        let oldNum=store.getData(keys.gui.gpspage.pageNumber);
         if (oldNum === undefined || ! hasPageEntries(oldNum)){
-            globalStore.storeData(keys.gui.gpspage.pageNumber,1);
+            store.storeData(keys.gui.gpspage.pageNumber,1);
         }
         this.remoteToken=remotechannel.subscribe(COMMANDS.gpsNum,(number)=>{
             let pn=parseInt(number);
@@ -130,6 +130,7 @@ class GpsPage extends React.Component{
 
     getButtons(){
         let self=this;
+        let store=this.props.pageContext.getStore();
         return[
             {
                 name:'GpsCenter',
@@ -217,7 +218,7 @@ class GpsPage extends React.Component{
             anchorWatch(),
             RemoteChannelDialog({overflow:true}),
             Mob.mobDefinition(this.props.history),
-            EditPageDialog.getButtonDef('gpspage'+globalStore.getData(keys.gui.gpspage.pageNumber,0),
+            EditPageDialog.getButtonDef('gpspage'+store.getData(keys.gui.gpspage.pageNumber,0),
                 PANEL_LIST,
                 [LayoutHandler.OPTIONS.ANCHOR]),
             LayoutFinishedDialog.getButtonDef(),
@@ -248,20 +249,22 @@ class GpsPage extends React.Component{
         resizeFont();
     }
     setPageNumber(num,opt_noRemote){
-        globalStore.storeData(keys.gui.gpspage.pageNumber,num);
+        let store=this.props.pageContext.getStore();
+        store.storeData(keys.gui.gpspage.pageNumber,num);
         if (! opt_noRemote){
             remotechannel.sendMessage(COMMANDS.gpsNum,num);
         }
     }
     render(){
         let self=this;
+        let store=this.props.pageContext.getStore();
         let autohide=undefined;
-        if (globalStore.getData(keys.properties.autoHideGpsPage)){
-            autohide=globalStore.getData(keys.properties.hideButtonTime,30)*1000;
+        if (store.getData(keys.properties.autoHideGpsPage)){
+            autohide=store.getData(keys.properties.hideButtonTime,30)*1000;
         }
         let MainContent=(props)=> {
             let fontSize = layoutBaseParam.baseWidgetFontSize;
-            let dimensions = globalStore.getData(keys.gui.global.windowDimensions);
+            let dimensions = store.getData(keys.gui.global.windowDimensions);
             if (dimensions) {
                 let width = dimensions.width - 60; //TODO: correct button dimensions...
                 if (width > 0 && dimensions.height > 0) {

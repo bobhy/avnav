@@ -5,7 +5,6 @@
 import Dynamic from '../hoc/Dynamic.jsx';
 import Button from '../components/Button.jsx';
 import ItemList from '../components/ItemList.jsx';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
@@ -107,9 +106,9 @@ class DebugDialog extends React.Component{
 const showEditDialog=(handlerId,child,opt_doneCallback)=>{
     EditHandlerDialog.createDialog(handlerId,child,opt_doneCallback);
 }
-const statusTextToImageUrl=(text)=>{
-    let rt=globalStore.getData(keys.properties.statusIcons[text]);
-    if (! rt) rt=globalStore.getData(keys.properties.statusIcons.INACTIVE);
+const statusTextToImageUrl=(text,store)=>{
+    let rt=store.getData(keys.properties.statusIcons[text]);
+    if (! rt) rt=store.getData(keys.properties.statusIcons.INACTIVE);
     return rt;
 };
 const EditIcon=(props)=>{
@@ -121,7 +120,7 @@ const ChildStatus=(props)=>{
     let canEdit=props.canEdit && props.connected;
     return (
         <div className="childStatus">
-            <img src={statusTextToImageUrl(props.status)}/>
+            <img src={statusTextToImageUrl(props.status,props.store)}/>
             <span className="statusName">{props.name}</span>
             <span className="statusInfo">{props.info}</span>
             {canEdit && <EditIcon onClick={
@@ -154,6 +153,7 @@ const StatusItem=(props)=>{
                     connected={props.connected}
                     handlerId={props.id}
                     finishCallback={props.finishCallback}
+                    store={props.store}
                 />
             })}
         </div>
@@ -164,11 +164,12 @@ const StatusItem=(props)=>{
 class StatusList extends React.Component{
     constructor(props) {
         super(props);
+        let store=this.props.store;
         this.querySequence=1;
         this.doQuery=this.doQuery.bind(this);
         this.queryResult=this.queryResult.bind(this);
         this.errors=0;
-        this.timer=GuiHelpers.lifecycleTimer(this,this.doQuery,globalStore.getData(keys.properties.statusQueryTimeout),true);
+        this.timer=GuiHelpers.lifecycleTimer(this,this.doQuery,store.getData(keys.properties.statusQueryTimeout),true);
         this.mainListRef=null;
         this.state={
             itemList:[]
@@ -253,6 +254,7 @@ class StatusList extends React.Component{
         }
     }
     render(){
+        let store=this.props.pageContext.getStore();
         return <ItemList
             itemClass={(iprops)=><StatusItem
                 connected={this.props.connected}
@@ -262,6 +264,7 @@ class StatusList extends React.Component{
                         this.retriggerQuery();
                     }
                 }
+                store={store}
                 {...iprops}/>}
             itemList={this.state.itemList}
             scrollable={true}
@@ -292,7 +295,8 @@ class StatusPage extends React.Component{
         this.reloadNotifier=new Notifier();
     }
     componentDidMount(){
-        if (! globalStore.getData(keys.gui.capabilities.config)) return;
+        let store=this.props.pageContext.getStore();
+        if (! store.getData(keys.gui.capabilities.config)) return;
         Requests.getJson('',undefined,{
             request:'api',
             type:'config',
@@ -320,7 +324,7 @@ class StatusPage extends React.Component{
     }
     render(){
         let self=this;
-
+        let store=this.props.pageContext.getStore();
         let Rt=Dynamic((props)=>{
             let buttons=[
                 {
@@ -380,7 +384,7 @@ class StatusPage extends React.Component{
                         OverlayDialog.dialog((props)=>{
                             return <LogDialog
                                 {...props}
-                                baseUrl={globalStore.getData(keys.properties.navUrl)+"?request=download&type=config"}
+                                baseUrl={store.getData(keys.properties.navUrl)+"?request=download&type=config"}
                                 title={'AvNav Log'}
                             />
                         });
