@@ -26,7 +26,6 @@ import {TrackConvertDialog} from "../components/TrackInfoDialog";
 import FullScreen from '../components/Fullscreen';
 import DialogButton from "../components/DialogButton";
 import RemoteChannelDialog from "../components/RemoteChannelDialog";
-import {InputReadOnly} from "../components/Inputs";
 import assign from 'object-assign';
 import WidgetFactory from "../components/WidgetFactory";
 import ItemList from "../components/ItemList";
@@ -654,6 +653,7 @@ class NavPage extends React.Component{
                 overlayContent={ (props)=>
                     <React.Fragment>
                         {this.state.showWpButtons?<ButtonList
+                            store={this.props.pageContext.getStore()}
                             itemList={self.waypointButtons}
                             className="overlayContainer"
                         />:null}

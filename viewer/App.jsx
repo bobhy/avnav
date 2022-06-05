@@ -351,15 +351,15 @@ class App extends React.Component {
         }
         const Dialogs = OverlayDialog.getDialogContainer;
         let appClass="app";
-        let layoutClass=(this.props.layoutName||"").replace(/[^0-9a-zA-Z]/g,'_');
+        let layoutClass=(this.state.layoutName||"").replace(/[^0-9a-zA-Z]/g,'_');
         appClass+=" "+layoutClass;
-        if (this.props.smallDisplay) appClass+=" smallDisplay";
+        if (this.state.smallDisplay) appClass+=" smallDisplay";
         const DynamicSound=Dynamic(SoundHandler, this.commonStore);
         const DynamicFirstRouter=Dynamic(Router, this.store);
         return <div
             className={appClass}
             ref="app"
-            style={{fontSize: this.props.fontSize+"px"}}
+            style={{fontSize: this.state.fontSize+"px"}}
             tabIndex="0"
             >
             <DynamicFirstRouter
@@ -372,10 +372,10 @@ class App extends React.Component {
             }
                 pageContext={this.pageContext}
                 location={this.state.location}
-                nightMode={this.props.nightMode}
+                nightMode={this.state.nightMode}
                 />
             <Dialogs
-                className={this.props.nightMode?"nightMode":""}/>
+                className={this.state.nightMode?"nightMode":""}/>
             { ! avnav.android ?<DynamicSound
                 storeKeys={alarmStoreKeys}
                 updateFunction={computeAlarmSound}
@@ -383,7 +383,7 @@ class App extends React.Component {
                 null}
             <ToastDisplay/>
             <ButtonSizer
-                fontSize={this.props.buttonFontSize}
+                fontSize={this.state.buttonFontSize}
                 refFunction={(el)=>{
                 this.buttonSizer=el;
                 this.computeButtonSizes();

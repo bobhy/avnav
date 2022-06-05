@@ -43,7 +43,9 @@ export default  (Component)=>{
     return React.forwardRef((props,ref)=>{
         let {onClick,...forwards}=props;
         let clickHandler=onClick?function() {
-            if (shouldIgnore()) return;
+            if (shouldIgnore()) {
+                return;
+            }
             if (props.onClick) {
                 props.onClick.apply(this, [...arguments]);
             }

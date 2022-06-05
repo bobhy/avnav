@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Button from './Button.jsx';
 import Dynamic from '../hoc/Dynamic.jsx';
 import keys from '../util/keys.jsx';
@@ -192,6 +193,10 @@ class ButtonList extends React.Component{
     }
 
 }
+ButtonList.propTypes={
+    store: PropTypes.object.isRequired,
+    itemList: PropTypes.array.isRequired
+}
 
 ButtonList.storeKeys = {
     maxButtons: keys.properties.maxButtons,
@@ -203,4 +208,5 @@ ButtonList.storeKeys = {
     cancelTop: keys.properties.cancelTop,
     isEditing: keys.gui.global.layoutEditing
 }
+
 export default ButtonList;

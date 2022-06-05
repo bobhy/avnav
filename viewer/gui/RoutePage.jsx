@@ -303,7 +303,7 @@ class RoutePage extends React.Component{
             return(
             <React.Fragment>
                 <Heading
-                    onClick={onHeadingClick}
+                    onClick={this.onHeadingClick}
                     currentRoute={route}
                     />
                 <ItemList
@@ -328,7 +328,7 @@ class RoutePage extends React.Component{
 
             </React.Fragment>
             );
-        });
+        },this.props.pageContext.getStore());
         const DynamicPage=Dynamic(Page, this.props.pageContext.getStore());
         return (
             <DynamicPage
