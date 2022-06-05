@@ -8,7 +8,6 @@ import keys,{KeyHelper} from '../util/keys.jsx';
 import React from 'react';
 import Page from '../components/Page.jsx';
 import Toast from '../components/Toast.jsx';
-import MapHolder from '../map/mapholder.js';
 import GuiHelpers from '../util/GuiHelpers.js';
 import Helper from '../util/helper.js';
 import WaypointListItem from '../components/WayPointListItem.jsx';
@@ -33,7 +32,6 @@ const isActiveRoute=()=>{
     return false;
 };
 
-const DynamicPage=Dynamic(Page);
 const RouteHandler=NavHandler.getRoutingHandler();
 
 const Heading = (props)=>{
@@ -262,7 +260,7 @@ class RoutePage extends React.Component{
             }
 
             let current=editor.getPointAt();
-            if (current) MapHolder.setCenter(current);
+            if (current) this.props.pageContext.getMapHolder().setCenter(current);
             editor.setNewRoute(route); //potentially we changed the server flag - so write it again
             editor.setNewIndex(editor.getIndexFromPoint(current,true));
             editor.syncTo(RouteEdit.MODES.EDIT);
@@ -331,6 +329,7 @@ class RoutePage extends React.Component{
             </React.Fragment>
             );
         });
+        const DynamicPage=Dynamic(Page, this.props.pageContext.getStore());
         return (
             <DynamicPage
                 {...this.props}

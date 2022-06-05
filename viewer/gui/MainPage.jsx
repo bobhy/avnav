@@ -9,7 +9,6 @@ import React from 'react';
 import Page from '../components/Page.jsx';
 import Toast from '../components/Toast.jsx';
 import Requests from '../util/requests.js';
-import MapHolder from '../map/mapholder.js';
 import base from '../base.js';
 import chartImage from '../images/Chart60.png';
 import GuiHelper from '../util/GuiHelpers.js';
@@ -17,7 +16,6 @@ import LayoutFinishedDialog from '../components/LayoutFinishedDialog.jsx';
 import Mob from '../components/Mob.js';
 import Addons from '../components/Addons.js';
 import EditOverlaysDialog, {DEFAULT_OVERLAY_CHARTENTRY} from '../components/EditOverlaysDialog.jsx';
-import mapholder from "../map/mapholder.js";
 import FullScreen from '../components/Fullscreen';
 import RemoteChannelDialog from "../components/RemoteChannelDialog";
 import {RecursiveCompare} from '../util/compare';
@@ -151,7 +149,7 @@ class MainPage extends React.Component {
      */
     showNavpage(entry) {
         base.log("activating navpage with url " + entry.url);
-        MapHolder.setChartEntry(entry);
+        this.props.pageContext.getMapHolder().setChartEntry(entry);
         this.props.history.push('navpage');
     };
 
@@ -321,6 +319,7 @@ class MainPage extends React.Component {
     }
     fillList(sequence) {
         let store=this.props.pageContext.getStore();
+        let mapholder=this.props.pageContext.getMapHolder();
         Requests.getJson("?request=list&type=chart",{timeout:3*parseFloat(store.getData(keys.properties.networkTimeout))}).then((json)=>{
                 let items = [];
                 let current=mapholder.getBaseChart();

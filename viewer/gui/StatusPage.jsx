@@ -436,7 +436,7 @@ class StatusPage extends React.Component{
                     />
                 }
                 buttonList={buttons}/>
-            )},{
+            )},this.props.pageContext.getStore(),{
             storeKeys:{
                 connected:keys.properties.connectedMode,
                 android:keys.gui.global.onAndroid,

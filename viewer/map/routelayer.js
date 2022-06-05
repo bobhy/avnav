@@ -1,10 +1,8 @@
 /**
  * Created by andreas on 14.07.14.
  */
-    
-import navobjects from '../nav/navobjects';
+
 import keys,{KeyHelper} from '../util/keys.jsx';
-import globalStore from '../util/globalstore.jsx';
 import RouteEdit from '../nav/routeeditor.js';
 import orangeMarker from '../images/MarkerOrange.png';
 
@@ -35,7 +33,7 @@ const RouteLayer=function(mapholder){
      * @private
      * @type {boolean}
      */
-    this.visible=globalStore.getData(keys.properties.layers.nav);
+    this.visible=this.mapholder.getStore().getData(keys.properties.layers.nav);
     let self=this;
 
 
@@ -85,8 +83,8 @@ const RouteLayer=function(mapholder){
         KeyHelper.flattenedKeys(activeRoute.getStoreKeys()),
         KeyHelper.flattenedKeys(editingRoute.getStoreKeys())
     );
-    globalStore.register(this.navChangedCb,navStoreKeys);
-    globalStore.register(this,keys.gui.global.propertySequence);
+    this.mapholder.getStore().register(this.navChangedCb,navStoreKeys);
+    this.mapholder.getStore().register(this,keys.gui.global.propertySequence);
 
 
 
@@ -97,18 +95,18 @@ const RouteLayer=function(mapholder){
  */
 RouteLayer.prototype.setStyle=function(opt_change) {
     this.lineStyle = {
-            color:  globalStore.getData(keys.properties.routeColor),
-            width:  globalStore.getData(keys.properties.routeWidth),
+            color:  this.mapholder.getStore().getData(keys.properties.routeColor),
+            width:  this.mapholder.getStore().getData(keys.properties.routeWidth),
             arrow: {
-                width:  globalStore.getData(keys.properties.routeWidth)*3,
-                length:  globalStore.getData(keys.properties.routeWidth)*7,
+                width:  this.mapholder.getStore().getData(keys.properties.routeWidth)*3,
+                length:  this.mapholder.getStore().getData(keys.properties.routeWidth)*7,
                 offset: 20,
                 open: true
                 }
         };
     this.dashedStyle = {
-        color:  globalStore.getData(keys.properties.routeColor),
-        width:  globalStore.getData(keys.properties.routeWidth),
+        color:  this.mapholder.getStore().getData(keys.properties.routeColor),
+        width:  this.mapholder.getStore().getData(keys.properties.routeWidth),
         dashed: true
     };
     this.normalWpStyle={
@@ -122,9 +120,9 @@ RouteLayer.prototype.setStyle=function(opt_change) {
         background: "red"
     };
     this.routeTargetStyle={
-        color:  globalStore.getData(keys.properties.bearingColor),
+        color:  this.mapholder.getStore().getData(keys.properties.bearingColor),
         width: 1,
-        background:  globalStore.getData(keys.properties.bearingColor)
+        background:  this.mapholder.getStore().getData(keys.properties.bearingColor)
     };
     if (! opt_change) {
         this.markerStyle = {
@@ -136,15 +134,15 @@ RouteLayer.prototype.setStyle=function(opt_change) {
         this.markerStyle.image.src = this.markerStyle.src;
     }
     this.courseStyle = {
-        color:  globalStore.getData(keys.properties.bearingColor),
-        width:  globalStore.getData(keys.properties.bearingWidth)
+        color:  this.mapholder.getStore().getData(keys.properties.bearingColor),
+        width:  this.mapholder.getStore().getData(keys.properties.bearingWidth)
 
     };
     this.textStyle= {
         stroke: '#fff',
         color: '#000',
         width: 3,
-        fontSize: globalStore.getData(keys.properties.routingTextSize),
+        fontSize: this.mapholder.getStore().getData(keys.properties.routingTextSize),
         fontBase: 'Calibri,sans-serif',
         offsetY: 15
     };
@@ -170,15 +168,15 @@ RouteLayer.prototype.onPostCompose=function(center,drawing) {
     this.wpPixel=[];
     if (!this.visible) return;
     let currentEditor=this._displayEditing?editingRoute:activeRoute;
-    let gpsPosition=globalStore.getData(keys.nav.gps.position);
-    let gpsValid=globalStore.getData(keys.nav.gps.valid);
+    let gpsPosition=this.mapholder.getStore().getData(keys.nav.gps.position);
+    let gpsValid=this.mapholder.getStore().getData(keys.nav.gps.valid);
     let toPoint=activeRoute.getCurrentTarget();
     let to=toPoint?this.mapholder.pointToMap(toPoint.toCoord()):undefined;
     let fromPoint=activeRoute.getCurrentFrom();
     let from=fromPoint?this.mapholder.pointToMap(fromPoint.toCoord()):undefined;
-    let showBoat=globalStore.getData(keys.properties.layers.boat);
-    let showNav=globalStore.getData(keys.properties.layers.nav);
-    let wpSize=globalStore.getData(keys.properties.routeWpSize);
+    let showBoat=this.mapholder.getStore().getData(keys.properties.layers.boat);
+    let showNav=this.mapholder.getStore().getData(keys.properties.layers.nav);
+    let wpSize=this.mapholder.getStore().getData(keys.properties.routeWpSize);
     let drawNav=showBoat&&showNav;
     let route=currentEditor.getRoute();
     let text,wp;
@@ -241,7 +239,7 @@ RouteLayer.prototype.onPostCompose=function(center,drawing) {
  */
 RouteLayer.prototype.findTarget=function(pixel){
     //TODO: own tolerance
-    let tolerance=globalStore.getData(keys.properties.clickTolerance)/2;
+    let tolerance=this.mapholder.getStore().getData(keys.properties.clickTolerance)/2;
     let currentEditor=this._displayEditing?editingRoute:activeRoute;
     if (this.routePixel) {
         let idx = this.mapholder.findTarget(pixel, this.routePixel, tolerance);
@@ -258,7 +256,7 @@ RouteLayer.prototype.findTarget=function(pixel){
     return undefined;
 };
 RouteLayer.prototype.dataChanged=function() {
-    this.visible=globalStore.getData(keys.properties.layers.nav);
+    this.visible=this.mapholder.getStore().getData(keys.properties.layers.nav);
     this.setStyle(true);
     this.mapholder.triggerRender();
 };

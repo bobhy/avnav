@@ -6,7 +6,6 @@ import NavCompute from '../nav/navcompute' ;
 import navobjects from '../nav/navobjects' ;
 import anchor from '../images/icons-new/anchor.png' ;
 import keys from '../util/keys.jsx';
-import globalStore from '../util/globalstore.jsx';
 import RouteEdit from '../nav/routeeditor.js';
 import boatImage from '../images/Boat-NoNeedle.png';
 import boatImageHdg from '../images/BoatHdg.png';
@@ -102,7 +101,7 @@ const NavLayer=function(mapholder){
     };
     this.measureStyle.image.src=this.measureStyle.src;
     this.setStyle();
-    globalStore.register(this,keys.gui.global.propertySequence);
+    this.mapholder.getStore().register(this,keys.gui.global.propertySequence);
 
 };
 
@@ -113,22 +112,22 @@ const NavLayer=function(mapholder){
  */
 NavLayer.prototype.setStyle=function() {
     this.circleStyle={
-            color: globalStore.getData(keys.properties.navCircleColor),
-            width: globalStore.getData(keys.properties.navCircleWidth)
+            color: this.mapholder.getStore().getData(keys.properties.navCircleColor),
+            width: this.mapholder.getStore().getData(keys.properties.navCircleWidth)
     };
     this.anchorCircleStyle={
-        color: this.anchorStyle.courseVectorColor?this.anchorStyle.courseVectorColor:globalStore.getData(keys.properties.anchorCircleColor),
-        width: globalStore.getData(keys.properties.anchorCircleWidth)
+        color: this.anchorStyle.courseVectorColor?this.anchorStyle.courseVectorColor:this.mapholder.getStore().getData(keys.properties.anchorCircleColor),
+        width: this.mapholder.getStore().getData(keys.properties.anchorCircleWidth)
     };
     this.measureLineStyle={
-        color: this.measureStyle.courseVectorColor?this.measureStyle.courseVectorColor:globalStore.getData(keys.properties.measureColor),
-        width: globalStore.getData(keys.properties.navCircleWidth)
+        color: this.measureStyle.courseVectorColor?this.measureStyle.courseVectorColor:this.mapholder.getStore().getData(keys.properties.measureColor),
+        width: this.mapholder.getStore().getData(keys.properties.navCircleWidth)
     }
     this.measureTextStyle={
         stroke: '#fff',
-        color: this.measureStyle.courseVectorColor?this.measureStyle.courseVectorColor:globalStore.getData(keys.properties.measureColor),
+        color: this.measureStyle.courseVectorColor?this.measureStyle.courseVectorColor:this.mapholder.getStore().getData(keys.properties.measureColor),
         width: 3,
-        fontSize: globalStore.getData(keys.properties.aisTextSize),
+        fontSize: this.mapholder.getStore().getData(keys.properties.aisTextSize),
         fontBase: 'Calibri,sans-serif',
         offsetY: -20
     }
@@ -156,8 +155,8 @@ const positionKeys={
  */
 NavLayer.prototype.onPostCompose=function(center,drawing){
     let anchorDistance=activeRoute.anchorWatch();
-    let gps=globalStore.getMultiple(positionKeys);
-    let boatDirectionMode=globalStore.getData(keys.properties.boatDirectionMode,'cog');
+    let gps=this.mapholder.getStore().getMultiple(positionKeys);
+    let boatDirectionMode=this.mapholder.getStore().getData(keys.properties.boatDirectionMode,'cog');
     let boatRotation=gps.boatDirection;
     let usedHdg=gps.directionMode !== 'cog';
     let boatStyle=assign({},gps.isSteady?this.boatStyleSteady:(usedHdg?this.boatStyleHdg:this.boatStyle));
@@ -175,10 +174,10 @@ NavLayer.prototype.onPostCompose=function(center,drawing){
         }
     }
     let boatPosition = this.mapholder.transformToMap(gps.position.toCoord());
-    if (globalStore.getData(keys.properties.layers.boat) && gps.valid) {
-        let courseVectorTime=parseInt(globalStore.getData(keys.properties.navBoatCourseTime,600));
+    if (this.mapholder.getStore().getData(keys.properties.layers.boat) && gps.valid) {
+        let courseVectorTime=parseInt(this.mapholder.getStore().getData(keys.properties.navBoatCourseTime,600));
         let courseVetcorDistance=(gps.speed !== undefined)?gps.speed*courseVectorTime:0;
-        let f=globalStore.getData(keys.properties.boatIconScale,1.0);
+        let f=this.mapholder.getStore().getData(keys.properties.boatIconScale,1.0);
         boatStyle.size=[boatStyle.size[0]*f, boatStyle.size[1]*f];
         boatStyle.anchor=[boatStyle.anchor[0]*f,boatStyle.anchor[1]*f];
         drawing.drawImageToContext(boatPosition, boatStyle.image, boatStyle);
@@ -191,33 +190,33 @@ NavLayer.prototype.onPostCompose=function(center,drawing){
             if (courseVetcorDistance > 0 && boatStyle.courseVector !== false) {
                 other = this.computeTarget(boatPosition, course, courseVetcorDistance);
                 drawing.drawLineToContext([boatPosition, other], courseVectorStyle);
-                if (boatRotation !== undefined && globalStore.getData(keys.properties.boatDirectionVector)) {
+                if (boatRotation !== undefined && this.mapholder.getStore().getData(keys.properties.boatDirectionVector)) {
                     other = this.computeTarget(boatPosition, boatRotation, courseVetcorDistance);
                     drawing.drawLineToContext([boatPosition, other], assign({dashed: true}, courseVectorStyle));
                 }
             }
         }
         if (! anchorDistance) {
-            let radius1 = parseInt(globalStore.getData(keys.properties.navCircle1Radius));
+            let radius1 = parseInt(this.mapholder.getStore().getData(keys.properties.navCircle1Radius));
             if (radius1 > 10) {
                 other = this.computeTarget(boatPosition, course, radius1);
                 drawing.drawCircleToContext(boatPosition, other, this.circleStyle);
             }
-            let radius2 = parseInt(globalStore.getData(keys.properties.navCircle2Radius));
+            let radius2 = parseInt(this.mapholder.getStore().getData(keys.properties.navCircle2Radius));
             if (radius2 > 10 && radius2 > radius1) {
                 other = this.computeTarget(boatPosition, course, radius2);
                 drawing.drawCircleToContext(boatPosition, other, this.circleStyle);
             }
-            let radius3 = parseInt(globalStore.getData(keys.properties.navCircle3Radius));
+            let radius3 = parseInt(this.mapholder.getStore().getData(keys.properties.navCircle3Radius));
             if (radius3 > 10 && radius3 > radius2 && radius3 > radius1) {
                 other = this.computeTarget(boatPosition, course, radius3);
                 drawing.drawCircleToContext(boatPosition, other, this.circleStyle);
             }
         }
     }
-    if (!globalStore.getData(keys.map.lockPosition,false)) {
+    if (!this.mapholder.getStore().getData(keys.map.lockPosition,false)) {
         drawing.drawImageToContext(center, this.centerStyle.image, this.centerStyle);
-        let measurePos=globalStore.getData(keys.map.measurePosition);
+        let measurePos=this.mapholder.getStore().getData(keys.map.measurePosition);
         if (measurePos && measurePos.lat && measurePos.lon){
             let measure=this.mapholder.transformToMap((new navobjects.Point(measurePos.lon,measurePos.lat)).toCoord());
             drawing.drawImageToContext(measure,this.measureStyle.image,this.measureStyle);

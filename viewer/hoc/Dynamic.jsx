@@ -7,14 +7,12 @@
  * (possibly already translated if storeKeys was an object) and the list of keys and must return the new state
  */
 
-import globalStore from "../util/globalstore.jsx";
 import React from 'react';
 import assign from 'object-assign';
 
 
 
-export default  function(Component,opt_options){
-    let store=globalStore;
+export default  function(Component,store,opt_options){
     class Dynamic extends React.Component{
         constructor(props){
             super(props);
@@ -22,6 +20,12 @@ export default  function(Component,opt_options){
             this.getStoreKeys=this.getStoreKeys.bind(this);
             this.dataChanged=this.dataChanged.bind(this);
             let keys=this.getStoreKeys();
+            if (! store || ! store.register){
+                console.trace("invalid store - no register");
+            }
+            if (! store || ! store.deregister){
+                console.trace("invalid store - no deregister");
+            }
             if (keys) store.register(this,keys);
             this.lastUpdate=0;
             this.state=this.getTranslatedStoreValues();
@@ -85,14 +89,20 @@ export default  function(Component,opt_options){
         componentDidMount(){
             let keys=this.getStoreKeys();
             if (!keys) return;
+            if (! store || ! store.register){
+                console.trace("invalid store - no register");
+            }
             store.register(this,keys);
         }
         componentWillUnmount(){
+            if (! store || ! store.deregister){
+                console.trace("invalid store - no deregister");
+            }
             store.deregister(this);
         }
         render(){
             let {storeKeys,updateFunction,changeCallback,...forwardProps}=this.props;
-            let childprops=assign({},forwardProps,this.state);
+            let childprops=assign({store:store},forwardProps,this.state);
             return <Component {...childprops}/>
         }
     };

@@ -4,7 +4,6 @@
     
 import navobjects from '../nav/navobjects';
 import keys from '../util/keys.jsx';
-import globalStore from '../util/globalstore.jsx';
 import base from '../base.js';
 import assign from 'object-assign';
 import NavCompute from '../nav/navcompute.js';
@@ -37,9 +36,9 @@ const mergeStyles=function(){
     return rt;
 };
 
-const styleKeyFromItem=(item,useDefault,useInternal)=>{
+const styleKeyFromItem=(store,item,useDefault,useInternal)=>{
     let rt="normal";
-    if (item.mmsi === globalStore.getData(keys.nav.ais.trackedMmsi)){
+    if (item.mmsi === store.getData(keys.nav.ais.trackedMmsi)){
         rt="tracking";
     }
     if (item.warning){
@@ -91,8 +90,8 @@ const AisLayer=function(mapholder){
      *
      * @type {boolean}
      */
-    this.visible=globalStore.getData(keys.properties.layers.ais);
-    globalStore.register(this,keys.gui.global.propertySequence);
+    this.visible=this.mapholder.getStore().getData(keys.properties.layers.ais);
+    this.mapholder.getStore().register(this,keys.gui.global.propertySequence);
     this.computeTarget=this.computeTarget.bind(this);
 
 };
@@ -115,7 +114,7 @@ AisLayer.prototype.createIcon=function(color,useCourseVector){
     ctx.strokeStyle = 'rgba(0,0,0,0)';
     ctx.lineCap = 'butt';
     ctx.lineJoin = 'miter';
-    ctx.lineWidth=parseInt(globalStore.getData(keys.properties.aisIconBorderWidth,1));
+    ctx.lineWidth=parseInt(this.mapholder.getStore().getData(keys.properties.aisIconBorderWidth,1));
     ctx.miterLimit = 4;
     ctx.fillStyle = color;
     ctx.strokeStyle = "#000000";
@@ -149,8 +148,8 @@ AisLayer.prototype.createIcon=function(color,useCourseVector){
  * @private
  */
 AisLayer.prototype.createInternalIcons = function () {
-    let style = globalStore.getMultiple(keys.properties.style);
-    let useCourseVector = globalStore.getData(keys.properties.aisUseCourseVector, false);
+    let style = this.mapholder.getStore().getMultiple(keys.properties.style);
+    let useCourseVector = this.mapholder.getStore().getData(keys.properties.aisUseCourseVector, false);
     let symbolStyle = useCourseVector ? this.targetStyleCourseVector : this.targetStyle;
     this.symbolStyles.internalnearest = new StyleEntry(
         this.createIcon(style.aisNearestColor, useCourseVector),
@@ -174,7 +173,7 @@ AisLayer.prototype.createInternalIcons = function () {
  */
 AisLayer.prototype.findTarget=function(pixel){
     base.log("findAisTarget "+pixel[0]+","+pixel[1]);
-    let tolerance=globalStore.getData(keys.properties.clickTolerance)/2;
+    let tolerance=this.mapholder.getStore().getData(keys.properties.clickTolerance)/2;
     let idx=this.mapholder.findTarget(pixel,this.pixel,tolerance);
     if (idx >=0) return this.pixel[idx].ais;
     return undefined;
@@ -186,7 +185,7 @@ AisLayer.prototype.setStyles=function(){
         stroke: '#fff',
         color: '#000',
         width: 3,
-        fontSize: globalStore.getData(keys.properties.aisTextSize),
+        fontSize: this.mapholder.getStore().getData(keys.properties.aisTextSize),
         fontBase: 'Calibri,sans-serif',
         offsetY: 15
     };
@@ -210,17 +209,18 @@ AisLayer.prototype.setStyles=function(){
  * @returns {StyleEntry}
  */
 AisLayer.prototype.getStyleEntry=function(item){
-    return mergeStyles(this.symbolStyles[styleKeyFromItem(item,true,true)],
-        this.symbolStyles[styleKeyFromItem(item,true)],
-        this.symbolStyles[styleKeyFromItem(item)]);
+    let store=this.mapholder.getStore();
+    return mergeStyles(this.symbolStyles[styleKeyFromItem(store,item,true,true)],
+        this.symbolStyles[styleKeyFromItem(store,item,true)],
+        this.symbolStyles[styleKeyFromItem(store,item)]);
 };
 
 AisLayer.prototype.drawTargetSymbol=function(drawing,xy,current,computeTargetFunction){
-    let courseVectorTime=globalStore.getData(keys.properties.navBoatCourseTime,0);
-    let useCourseVector=globalStore.getData(keys.properties.aisUseCourseVector,false);
-    let courseVectorWidth=globalStore.getData(keys.properties.navCircleWidth);
-    let scale=globalStore.getData(keys.properties.aisIconScale,1);
-    let classbShrink=globalStore.getData(keys.properties.aisClassbShrink,1);
+    let courseVectorTime=this.mapholder.getStore().getData(keys.properties.navBoatCourseTime,0);
+    let useCourseVector=this.mapholder.getStore().getData(keys.properties.aisUseCourseVector,false);
+    let courseVectorWidth=this.mapholder.getStore().getData(keys.properties.navCircleWidth);
+    let scale=this.mapholder.getStore().getData(keys.properties.aisIconScale,1);
+    let classbShrink=this.mapholder.getStore().getData(keys.properties.aisClassbShrink,1);
     let rotation=current.course||0;
     let symbol=this.getStyleEntry(current);
     let style=assign({},symbol.style);
@@ -287,10 +287,10 @@ AisLayer.prototype.onPostCompose=function(center,drawing){
     if (! this.visible) return;
     let i;
     let pixel=[];
-    let aisList=globalStore.getData(keys.nav.ais.list,[]);
-    let firstLabel=globalStore.getData(keys.properties.aisFirstLabel,'');
-    let secondLabel=globalStore.getData(keys.properties.aisSecondLabel,'');
-    let thirdLabel=globalStore.getData(keys.properties.aisThirdLabel,'');
+    let aisList=this.mapholder.getStore().getData(keys.nav.ais.list,[]);
+    let firstLabel=this.mapholder.getStore().getData(keys.properties.aisFirstLabel,'');
+    let secondLabel=this.mapholder.getStore().getData(keys.properties.aisSecondLabel,'');
+    let thirdLabel=this.mapholder.getStore().getData(keys.properties.aisThirdLabel,'');
     for (i in aisList){
         let current=aisList[i];
         let pos=current.mapPos;
@@ -324,7 +324,7 @@ AisLayer.prototype.onPostCompose=function(center,drawing){
  * @param evdata
  */
 AisLayer.prototype.dataChanged=function(){
-    this.visible=globalStore.getData(keys.properties.layers.ais);
+    this.visible=this.mapholder.getStore().getData(keys.properties.layers.ais);
     this.createInternalIcons();
     this.setStyles();
 };

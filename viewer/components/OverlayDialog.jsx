@@ -8,17 +8,17 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import assign from 'object-assign';
 import DialogDisplay from './OverlayDialogDisplay.jsx';
 import Dynamic from '../hoc/Dynamic.jsx';
 import InputMonitor from '../hoc/InputMonitor.jsx';
-import globalStore from '../util/globalstore.jsx';
 import ItemList from '../components/ItemList.jsx';
-import keys from '../util/keys.jsx';
 import DB from './DialogButton.jsx';
-import shallowcompare from '../util/compare.js';
+import Store from "../util/store";
 
+//just create a store to use all the Dynamic HOC features
+let DialogStore= new Store('dialog');
+const DIALOG_KEY='gui.dialogs';
 let id=1;
 const notifyClosed=()=>{
     if (window.avnav.android && window.avnav.android.dialogClosed){
@@ -44,17 +44,17 @@ const addDialog=(key,content,opt_parent,opt_cancelCallback,opt_timeout)=> {
         closeCallback: ()=>{removeDialog(key)},
         onClick: ()=>{removeDialog(key)}
     };
-    let currentDialogs=assign({},globalStore.getData(keys.gui.global.currentDialog,{}));
+    let currentDialogs=assign({},DialogStore.getData(DIALOG_KEY,{}));
     if (opt_timeout){
         properties.timeoutHandler=window.setTimeout(removeDialog(key),opt_timeout);
     }
     currentDialogs[key]=properties;
-    globalStore.storeData(keys.gui.global.currentDialog,currentDialogs);
+    DialogStore.storeData(DIALOG_KEY,currentDialogs);
     return key;
 };
 
 const removeDialog=(key,opt_omitCancel)=> {
-    let currentDialogs=assign({},globalStore.getData(keys.gui.global.currentDialog,{}));
+    let currentDialogs=assign({},DialogStore.getData(DIALOG_KEY,{}));
     let old=currentDialogs[key];
     if (old !== undefined) {
         delete currentDialogs[key];
@@ -62,7 +62,7 @@ const removeDialog=(key,opt_omitCancel)=> {
             window.clearTimeout(old.timeout);
         }
     }
-    globalStore.storeData(keys.gui.global.currentDialog,currentDialogs);
+    DialogStore.storeData(DIALOG_KEY,currentDialogs);
     if (old && old.cancelCallback && ! opt_omitCancel) {
         //do this after we updated the store to avoid endless loops
         //if someone calls removeDialog in the cancel callback
@@ -74,7 +74,7 @@ const removeDialog=(key,opt_omitCancel)=> {
 
 const removeAll=()=>{
     //no callbacks...
-    globalStore.storeData(keys.gui.global.currentDialog,{});
+    DialogStore.storeData(DIALOG_KEY,{});
 };
 
 
@@ -195,15 +195,15 @@ const Dialogs = {
     },
 
 /**
-     * get the react elemnt that will handle all the dialogs
+     * get the react element that will handle all the dialogs
      */
     getDialogContainer: (props) => {
         let Item = InputMonitor(DialogDisplay);
-        let List = Dynamic(ItemList);
+        let List = Dynamic(ItemList,DialogStore);
         return <List {...props}
             itemClass={Item}
             storeKeys={{
-                items:keys.gui.global.currentDialog
+                items:DIALOG_KEY
             }}
             updateFunction={(state)=>{
                 let items=[];

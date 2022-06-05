@@ -25,7 +25,6 @@
 
 import base from '../base.js';
 import Requests from '../util/requests.js';
-import globalStore from '../util/globalstore.jsx';
 import keys from '../util/keys.jsx';
 import Helper from '../util/helper.js';
 import ChartSourceBase from './chartsourcebase.js';
@@ -290,10 +289,10 @@ class AvnavChartSource extends ChartSourceBase{
         }
         else{
             if (url.match(/^https*[:]/)){
-                upZoom=globalStore.getData(keys.properties.mapOnlineUpZoom);
+                upZoom=this.mapholder.getStore().getData(keys.properties.mapOnlineUpZoom);
             }
             else{
-                upZoom=globalStore.getData(keys.properties.mapUpZoom);
+                upZoom=this.mapholder.getStore().getData(keys.properties.mapUpZoom);
             }
         }
         return new Promise((resolve, reject)=> {
@@ -304,7 +303,7 @@ class AvnavChartSource extends ChartSourceBase{
             let xmlUrl = url + "/avnav.xml";
             Requests.getHtmlOrText(xmlUrl, {
                 useNavUrl: false,
-                timeout: parseInt(globalStore.getData(keys.properties.chartQueryTimeout || 10000))
+                timeout: parseInt(this.mapholder.getStore().getData(keys.properties.chartQueryTimeout || 10000))
             })
                 .then((data)=> {
                     let layers = this.parseLayerlist(data, url,upZoom);
@@ -345,7 +344,7 @@ class AvnavChartSource extends ChartSourceBase{
         let chartKey = baseurl;
         let ll = [];
         let xmlDoc = Helper.parseXml(layerdata);
-        Array.from(xmlDoc.getElementsByTagName('TileMap')).forEach(function (tm) {
+        Array.from(xmlDoc.getElementsByTagName('TileMap')).forEach((tm)=> {
             let rt = {};
             rt.encryptFunction=self.encryptFunction;
             //complete tile map entry here
@@ -370,7 +369,7 @@ class AvnavChartSource extends ChartSourceBase{
             rt.maxZoom = parseInt(tm.getAttribute('maxzoom'));
             rt.projection = tm.getAttribute('projection'); //currently only for WMS
             //we store the layer region in EPSG:4326
-            Array.from(tm.childNodes).forEach(function (bb) {
+            Array.from(tm.childNodes).forEach((bb)=> {
                 if (bb.tagName != 'BoundingBox') return;
                 rt.layerExtent = [self.e2f(bb, 'minlon'), self.e2f(bb, 'minlat'),
                     self.e2f(bb, 'maxlon'), self.e2f(bb, 'maxlat')];
@@ -484,7 +483,7 @@ class AvnavChartSource extends ChartSourceBase{
                 tileLoadFunction: function (imageTile, src) {
                     imageTile.getImage().src=self.encryptUrl(src);
                 },
-                tileSize: NORMAL_TILE_SIZE*globalStore.getData(keys.properties.mapScale,1),
+                tileSize: NORMAL_TILE_SIZE*this.mapholder.getStore().getData(keys.properties.mapScale,1),
 
                 /*
                  url:layerurl+'/{z}/{x}/{y}.png'
@@ -558,7 +557,7 @@ class AvnavChartSource extends ChartSourceBase{
             if (! this.isReady()) resolve([]);
             let mapcoordinates=this.mapholder.pixelToCoord(pixel);
             let lonlat=this.mapholder.transformFromMap(mapcoordinates);
-            let offsetPoint=this.mapholder.pixelToCoord([pixel[0]+globalStore.getData(keys.properties.clickTolerance)/2,pixel[1]])
+            let offsetPoint=this.mapholder.pixelToCoord([pixel[0]+this.mapholder.getStore().getData(keys.properties.clickTolerance)/2,pixel[1]])
             let offsetLatlon=this.mapholder.transformFromMap(offsetPoint);
             let tolerance=Math.abs(offsetLatlon[0]-lonlat[0]);
             let layerActions=[];

@@ -3,7 +3,6 @@ import Button from './Button.jsx';
 import Dynamic from '../hoc/Dynamic.jsx';
 import keys from '../util/keys.jsx';
 import ItemList from './ItemList.jsx';
-import PropertyHandler from '../util/propertyhandler.js';
 
 
 class ButtonList extends React.Component{
@@ -155,21 +154,21 @@ class ButtonList extends React.Component{
                         fontSize={fontSize}
                         className={className + " main"}
                         itemList={mainItems}
-                        itemClass={Dynamic(Button,{changeCallback:this.buttonChanged})}
+                        itemClass={Dynamic(Button,this.props.store,{changeCallback:this.buttonChanged})}
                         />
                 {this.state.showOverflow ?
                     <ItemList {...this.props}
                         fontSize={fontSize}
                         className={className + " overflow"}
                         itemList={overflowItems}
-                        itemClass={Dynamic(Button,{changeCallback:this.buttonChanged})}
+                        itemClass={Dynamic(Button,this.props.store,{changeCallback:this.buttonChanged})}
                         />
                     :
                     null
                 }
                 <ItemList className="hidden"
                           itemList={invisibleItems}
-                          itemClass={Dynamic(Button,{changeCallback:this.buttonChanged})}
+                          itemClass={Dynamic(Button,this.props.store,{changeCallback:this.buttonChanged})}
                     />
                 </div>
         }
@@ -182,26 +181,26 @@ class ButtonList extends React.Component{
                 fontSize={fontSize}
                 itemList={items}
                 className={className +(this.props.buttonCols?" wrap":"")}
-                itemClass={Dynamic(Button,{changeCallback:this.buttonChanged})}
+                itemClass={Dynamic(Button,this.props.store,{changeCallback:this.buttonChanged})}
                 />
                 <ItemList className="hidden"
                     itemList={invisibleItems}
-                    itemClass={Dynamic(Button,{changeCallback:this.buttonChanged})}
+                    itemClass={Dynamic(Button,this.props.store,{changeCallback:this.buttonChanged})}
                 />
             </div>
         }
     }
 
 }
-export default Dynamic(ButtonList,{
-    storeKeys:{
-        maxButtons:keys.properties.maxButtons,
-        buttonHeight: keys.gui.global.computedButtonHeight,
-        buttonWidth: keys.gui.global.computedButtonWidth,
-        buttonSize: keys.properties.style.buttonSize,
-        dimensions: keys.gui.global.windowDimensions,
-        buttonCols: keys.properties.buttonCols,
-        cancelTop: keys.properties.cancelTop,
-        isEditing:keys.gui.global.layoutEditing
-        }
-});
+
+ButtonList.storeKeys = {
+    maxButtons: keys.properties.maxButtons,
+    buttonHeight: keys.gui.global.computedButtonHeight,
+    buttonWidth: keys.gui.global.computedButtonWidth,
+    buttonSize: keys.properties.style.buttonSize,
+    dimensions: keys.gui.global.windowDimensions,
+    buttonCols: keys.properties.buttonCols,
+    cancelTop: keys.properties.cancelTop,
+    isEditing: keys.gui.global.layoutEditing
+}
+export default ButtonList;

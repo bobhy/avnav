@@ -238,7 +238,7 @@ class AisPage extends React.Component{
         let self=this;
         let store=this.props.pageContext.getStore();
         let updateTime=store.getData(keys.properties.aisListUpdateTime,1)*1000;
-        const AisList=Dynamic(ItemList,{minTime:updateTime});
+        const AisList=Dynamic(ItemList,store,{minTime:updateTime});
         const Summary=Dynamic(function(props){
             let color=PropertyHandler.getAisColor({
                 warning: true
@@ -251,7 +251,7 @@ class AisPage extends React.Component{
                     <span>sorted by {fieldToLabel(self.state.sortField)}</span>
                 </div>
             );
-        },{minTime:updateTime});
+        },store,{minTime:updateTime});
         let MainContent=<React.Fragment>
             <Summary numTargets={0}
                      storeKeys={{

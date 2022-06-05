@@ -24,6 +24,7 @@ import EditOverlaysDialog from './EditOverlaysDialog.jsx';
 import {getOverlayConfigName} from "../map/chartsourcebase";
 import Helper from "../util/helper";
 import assign from 'object-assign';
+import GuiHelpers from "../util/GuiHelpers";
 
 const SHOW_MODE={
     never:0,
@@ -78,10 +79,10 @@ const setShown=(setName,type)=>{
 
 
 
-const widgetCreator=(widget,mode)=>{
+const widgetCreator=(widget,mode,store)=>{
     let rt=WidgetFactory.createWidget(widget,{mode:mode,handleVisible:!globalStore.getData(keys.gui.global.layoutEditing)});
     if (widget.name=='CenterDisplay'){
-        rt=Dynamic(Visible(rt),{
+        rt=Dynamic(Visible(rt),store,{
             storeKeys:{
                 locked:keys.map.lockPosition,
                 editing: keys.gui.global.layoutEditing
@@ -99,6 +100,11 @@ class MapPage extends React.Component{
         this.mapEvent=this.mapEvent.bind(this);
         this.subscribeToken=undefined;
         this.bottomContainer=undefined;
+        GuiHelpers.storeHelperState(this,this.props.pageContext.getStore(),
+            LayoutHandler.getStoreKeys({
+            widgetFontSize:keys.properties.widgetFontSize,
+            mapFloat: keys.properties.mapFloat
+        }))
 
     }
     mapEvent(evdata){
@@ -176,7 +182,7 @@ class MapPage extends React.Component{
             let invertEditDirection=mode==='vertical'||panel === 'bottomLeft';
             return <ItemList  {...props}
                 className={"widgetContainer "+mode+" "+panel}
-                itemCreator={(widget)=>{return widgetCreator(widget,mode)}}
+                itemCreator={(widget)=>{return widgetCreator(widget,mode,this.props.pageContext.getStore())}}
                 itemList={panelItems.list}
                 onItemClick={(item,data)=>{
                     self.props.onItemClick(item,data,panelItems.name,invertEditDirection)
@@ -302,12 +308,6 @@ export const overlayDialog=(pageContext)=>{
     });
 };
 
-let DynamicPage=Dynamic(MapPage,{
-    storeKeys:LayoutHandler.getStoreKeys({
-        widgetFontSize:keys.properties.widgetFontSize,
-        mapFloat: keys.properties.mapFloat
-    })
-});
-DynamicPage.PANELS=['left','top','bottomLeft','bottomRight'];
-DynamicPage.propertyTypes=MapPage.propertyTypes
-export default DynamicPage;
+
+MapPage.PANELS=['left','top','bottomLeft','bottomRight'];
+export default MapPage;

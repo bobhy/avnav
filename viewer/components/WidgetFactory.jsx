@@ -449,7 +449,7 @@ class WidgetFactory{
                     }
                 }
                 if (storeKeys) {
-                    RenderWidget = Dynamic(RenderWidget, {storeKeys:storeKeys});
+                    RenderWidget = Dynamic(RenderWidget,globalStore, {storeKeys:storeKeys});
                 }
                 delete wprops.storeKeys;
                 return <RenderWidget {...wprops}/>

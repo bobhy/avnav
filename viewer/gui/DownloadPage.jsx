@@ -2,7 +2,6 @@
  * Created by andreas on 02.05.14.
  */
 
-import Dynamic from '../hoc/Dynamic.jsx';
 import Button from '../components/Button.jsx';
 import ItemList from '../components/ItemList.jsx';
 import keys from '../util/keys.jsx';
@@ -225,6 +224,10 @@ class DownloadPage extends React.Component{
         this.fillData=this.fillData.bind(this);
         this.readAddOns();
         this.fillData();
+        GuiHelpers.storeHelperState(this,this.props.pageContext.getStore(),
+            {
+                reloadSequence:keys.gui.global.reloadSequence
+            });
     }
     componentDidMount() {
         let store=this.props.pageContext.getStore();
@@ -617,6 +620,4 @@ class DownloadPage extends React.Component{
     }
 }
 
-export default Dynamic(DownloadPage,{storeKeys:{
-        reloadSequence:keys.gui.global.reloadSequence
-    }});
+export default DownloadPage;

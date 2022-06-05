@@ -28,26 +28,22 @@
  */
 
 
-import globalStore from "../util/globalstore.jsx";
 import React from 'react';
-import keys from '../util/keys.jsx';
-import MapHolder from '../map/mapholder';
 
-let lastMapClickTime=undefined;
-MapHolder.registerEventGuard((eventName)=>{
-    if (eventName === 'click'){
-        lastMapClickTime=(new Date()).getTime();
+let holders={};
+export const registerHolder=(name,holder)=>holders[name]=holder;
+
+const shouldIgnore=()=>{
+    for (let n in holders){
+        if (holders[n] && holders[n].shouldBlock()) return true;
     }
-});
-export default  (Component,opt_store)=>{
+}
+
+export default  (Component)=>{
     return React.forwardRef((props,ref)=>{
         let {onClick,...forwards}=props;
         let clickHandler=onClick?function() {
-            let timeDiff = globalStore.getData(keys.properties.mapClickWorkaroundTime, 300);
-            if (lastMapClickTime !== undefined) {
-                let now = (new Date()).getTime();
-                if ((now - timeDiff) <= lastMapClickTime) return;
-            }
+            if (shouldIgnore()) return;
             if (props.onClick) {
                 props.onClick.apply(this, [...arguments]);
             }

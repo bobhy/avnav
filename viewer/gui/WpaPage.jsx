@@ -40,9 +40,8 @@ const ListEntry=(props)=>{
     );
 };
 
-const DynamicList=Dynamic(ItemList);
 
-const Interface = Dynamic((props)=> {
+const Interface = (props)=> {
     let status = props.interface || {};
     if (!status.wpa_state) {
         return (
@@ -70,7 +69,7 @@ const Interface = Dynamic((props)=> {
         </div>
     );
 
-});
+};
 
 class Dialog extends React.Component{
     constructor(props){
@@ -132,6 +131,10 @@ const timeout=4000;
 class WpaPage extends React.Component{
     constructor(props){
         super(props);
+        this.state={
+            interface:undefined,
+            showAccess: undefined
+        }
         let self=this;
         this.buttons=[
             Mob.mobDefinition(this.props.pageContext),
@@ -155,8 +158,10 @@ class WpaPage extends React.Component{
             checkOk: false
         }).then((json)=>{
             self.numErrors=0;
-            store.storeData(keys.gui.wpapage.interface,json.status);
-            store.storeData(keys.gui.wpapage.showAccess,json.showAccess);
+            this.setState({
+                interface: json.status,
+                showAccess: json.showAccess
+            });
             let itemList=[];
             if (json.status && json.list) {
                 for (let i in json.list) {
@@ -250,15 +255,13 @@ class WpaPage extends React.Component{
     }
     render(){
         let self=this;
-
+        const DynamicList=Dynamic(ItemList, this.props.pageContext.getStore());
         const MainContent=(props)=> {
             return(
             <React.Fragment>
                 <Interface
-                    storeKeys={{
-                        showAccess:keys.gui.wpapage.showAccess,
-                        interface: keys.gui.wpapage.interface
-                    }}
+                        showAccess={this.state.showAccess}
+                        interface={this.state.interface}
                     />
                 <DynamicList
                     itemClass={ListEntry}

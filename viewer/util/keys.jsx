@@ -212,8 +212,6 @@ let keys={
             smallDisplay: K,
             onAndroid:K,
             propertySequence:K,
-            hasActiveInputs: K,
-            currentDialog: K, //holds the data for the currently visible dialog - if any
             windowDimensions: K,
             layoutEditing:K,
             layoutSequence: K, //updated on layout load

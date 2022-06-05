@@ -4,7 +4,6 @@ import React, { Component } from 'react';
 import History from './util/history.js';
 import Dynamic from './hoc/Dynamic.jsx';
 import keys,{KeyHelper} from './util/keys.jsx';
-import MainPage from './gui/MainPage.jsx';
 import OverlayDialog from './components/OverlayDialog.jsx';
 import globalStore from './util/globalstore.jsx';
 import Requests from './util/requests.js';
@@ -30,10 +29,9 @@ import {getPageForName} from "./gui/PageList";
 import Store from "./util/store";
 import alarmhandler from "./nav/alarmhandler.js";
 import PageContext from "./gui/PageContext";
+import {registerHolder} from "./hoc/MapEventGuard";
+import {hasActiveInputs} from "./hoc/InputMonitor";
 
-
-
-const DynamicSound=Dynamic(SoundHandler);
 
 //to feed the sound with the alarm sound we have
 const alarmStoreKeys={alarms:keys.nav.alarms.all,
@@ -92,7 +90,7 @@ class Router extends Component {
     }
 }
 
-const DynamicRouter=Dynamic(Router);
+
 //show one button (unscaled) to be able to compute button sizes
 const ButtonSizer=(props)=>{
         let fontSize=props.fontSize/4; //unscaled button font size
@@ -168,15 +166,20 @@ class App extends React.Component {
         if (firstStart){
             propertyHandler.firstStart();
         }
-        this.pageContext=new PageContext(this.store,this.history,MapHolder);
-        this.secondPageContext=new PageContext(this.secondStore,this.secondHistory,MapHolder);
+        let FirstHolder=new MapHolder(this.store);
+        registerHolder('first',FirstHolder);
+        this.pageContext=new PageContext(this.store,this.history,FirstHolder);
+        let SecondHolder=new MapHolder(this.secondStore);
+        registerHolder('second',SecondHolder);
+        this.secondPageContext=new PageContext(this.secondStore,this.secondHistory,SecondHolder);
         GuiHelpers.storeHelperState(this,this.store,
             {location:keys.gui.global.currentLocation});
         GuiHelpers.storeHelperState(this,this.secondStore,
             {secondLocation:keys.gui.global.currentLocation});
         Requests.getJson("/user/viewer/images.json",{useNavUrl:false,checkOk:false})
             .then((data)=>{
-                MapHolder.setImageStyles(data);
+                FirstHolder.setImageStyles(data);
+                SecondHolder.setImageStyles(data);
             })
             .catch((error)=> {
                 Toast("unable to load user image definitions: " + error);
@@ -224,6 +227,13 @@ class App extends React.Component {
             }
         },'addon',['0','1','2','3','4','5','6','7']);
         this.newDeviceHandler=this.newDeviceHandler.bind(this);
+        GuiHelpers.storeHelperState(this,this.store,{
+            buttonFontSize: keys.properties.style.buttonSize,
+            fontSize: keys.properties.baseFontSize,
+            smallDisplay: keys.gui.global.smallDisplay,
+            nightMode: keys.properties.nightMode,
+            layoutName: keys.properties.layoutName
+        });
         this.subscription=AndroidEventHandler.subscribe('deviceAdded',this.newDeviceHandler);
         this.remoteChannel=remotechannel;
         this.remoteChannel.start();
@@ -273,7 +283,7 @@ class App extends React.Component {
         this.setState({error:2});
     }
     checkSizes(){
-        if (this.commonStore.getData(keys.gui.global.hasActiveInputs,false)) return;
+        if (hasActiveInputs()) return;
         if (! this.refs.app) return;
         let current=this.refs.app.getBoundingClientRect();
         if (! current) return;
@@ -311,7 +321,7 @@ class App extends React.Component {
         }
     }
     keyDown(evt){
-        let inDialog=this.commonStore.getData(keys.gui.global.hasActiveInputs,false);
+        let inDialog=hasActiveInputs();
         KeyHandler.handleKeyEvent(evt,inDialog);
     }
     render(){
@@ -344,13 +354,15 @@ class App extends React.Component {
         let layoutClass=(this.props.layoutName||"").replace(/[^0-9a-zA-Z]/g,'_');
         appClass+=" "+layoutClass;
         if (this.props.smallDisplay) appClass+=" smallDisplay";
+        const DynamicSound=Dynamic(SoundHandler, this.commonStore);
+        const DynamicFirstRouter=Dynamic(Router, this.store);
         return <div
             className={appClass}
             ref="app"
             style={{fontSize: this.props.fontSize+"px"}}
             tabIndex="0"
             >
-            <DynamicRouter
+            <DynamicFirstRouter
                 storeKeys={assign({
                 sequence: keys.gui.global.propertySequence,
                 dimensions: keys.gui.global.windowDimensions,
@@ -379,12 +391,4 @@ class App extends React.Component {
         </div>
     };
 }
-export default   Dynamic(App,{
-  storeKeys:{
-      buttonFontSize: keys.properties.style.buttonSize,
-      fontSize: keys.properties.baseFontSize,
-      smallDisplay: keys.gui.global.smallDisplay,
-      nightMode: keys.properties.nightMode,
-      layoutName: keys.properties.layoutName
-  }
-});
+export default App;

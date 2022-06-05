@@ -34,7 +34,7 @@ const storeKeys={
     time:keys.gui.global.toastTimeout,
     onClick:keys.gui.global.toastCallback
 };
-export const ToastDisplay=Dynamic(ToastComponent,{
+export const ToastDisplay=Dynamic(ToastComponent,globalStore,{
     storeKeys:storeKeys
 });
 

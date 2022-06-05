@@ -3,7 +3,6 @@
  */
 
 import keys from '../util/keys.jsx';
-import globalStore from '../util/globalstore.jsx';
 import base from "../base";
 
 /**
@@ -23,7 +22,7 @@ export default class UserLayer {
          * @private
          * @type {boolean}
          */
-        this.visible = globalStore.getData(keys.properties.layers.user);
+        this.visible = this.mapholder.getStore().getData(keys.properties.layers.user);
         this.userOverlays = {};
         this.lineStyle = {};
         this.setStyle();
@@ -36,8 +35,8 @@ export default class UserLayer {
      */
     setStyle() {
         this.lineStyle = {
-            color: globalStore.getData(keys.properties.trackColor),
-            width: globalStore.getData(keys.properties.trackWidth)
+            color: this.mapholder.getStore().getData(keys.properties.trackColor),
+            width: this.mapholder.getStore().getData(keys.properties.trackWidth)
         }
     }
 
@@ -61,7 +60,7 @@ export default class UserLayer {
     }
 
     dataChanged() {
-        this.visible = globalStore.getData(keys.properties.layers.user);
+        this.visible = this.mapholder.getStore().getData(keys.properties.layers.user);
         this.setStyle();
     }
 

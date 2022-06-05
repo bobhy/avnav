@@ -2,13 +2,11 @@
  * Created by andreas on 02.05.14.
  */
 
-import Dynamic from '../hoc/Dynamic.jsx';
 import ItemList from '../components/ItemList.jsx';
 import keys from '../util/keys.jsx';
 import React from 'react';
 import PropTypes from 'prop-types';
 import Page from '../components/Page.jsx';
-import MapHolder from '../map/mapholder.js';
 import GuiHelpers from '../util/GuiHelpers.js';
 import WidgetFactory from '../components/WidgetFactory.jsx';
 import EditWidgetDialog from '../components/EditWidgetDialog.jsx';
@@ -138,7 +136,7 @@ class GpsPage extends React.Component{
             {
                 name:'GpsCenter',
                 onClick:()=>{
-                    MapHolder.centerToGps();
+                    this.props.pageContext.getMapHolder().centerToGps();
                     this.props.history.pop();
                 },
                 editDisable: true

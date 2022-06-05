@@ -11,7 +11,6 @@ import RouteLayer from './routelayer';
 import {Drawing,DrawingPositionConverter} from './drawing';
 import Formatter from '../util/formatter';
 import keys,{KeyHelper} from '../util/keys.jsx';
-import globalStore from '../util/globalstore.jsx';
 import Requests from '../util/requests.js';
 import base from '../base.js';
 import northImage from '../images/nadel_mit.png';
@@ -97,8 +96,8 @@ class Context{
  * the holer remains alive all the time whereas the map could be recreated on demand
  * @constructor
  */
-const MapHolder=function(){
-
+const MapHolder=function(store){
+    this.store=store;
     DrawingPositionConverter.call(this);
     /** @private
      * @type {Map}
@@ -151,7 +150,7 @@ const MapHolder=function(){
     this.forceZoom=false; //temporarily overwrite autozoom
     this.mapZoom=-1; //the last zoom we required from the map
     try {
-        let currentView = localStorage.getItem(globalStore.getData(keys.properties.centerName));
+        let currentView = localStorage.getItem(this.store.getData(keys.properties.centerName));
         if (currentView) {
             let decoded = JSON.parse(currentView);
             this.center = decoded.center;
@@ -165,7 +164,7 @@ const MapHolder=function(){
      * @private
      * @type {Drawing}
      */
-    this.drawing=new Drawing(this,globalStore.getData(keys.properties.style.useHdpi,false));
+    this.drawing=new Drawing(this,this.store.getData(keys.properties.style.useHdpi,false));
 
     this.northImage=new Image();
     this.northImage.src=northImage;
@@ -193,21 +192,21 @@ const MapHolder=function(){
         self.navEvent();
     });
     this.propertyChange=new Callback(()=>{
-        self.drawing.setUseHdpi(globalStore.getData(keys.properties.style.useHdpi,false));
+        self.drawing.setUseHdpi(this.store.getData(keys.properties.style.useHdpi,false));
         self.needsRedraw=true;
     });
     this.editMode=new Callback(()=>{
-        let isEditing=globalStore.getData(keys.gui.global.layoutEditing);
+        let isEditing=this.store.getData(keys.gui.global.layoutEditing);
         if (isEditing){
             self.setCourseUp(false);
             self.setGpsLock(false);
         }
     });
-    globalStore.register(this.navChanged,this.storeKeys);
-    globalStore.register(this.propertyChange,keys.gui.global.propertySequence);
-    globalStore.register(this.editMode,keys.gui.global.layoutEditing);
+    this.store.register(this.navChanged,this.storeKeys);
+    this.store.register(this.propertyChange,keys.gui.global.propertySequence);
+    this.store.register(this.editMode,keys.gui.global.layoutEditing);
 
-    globalStore.register(()=>{
+    this.store.register(()=>{
         this.updateSize();
     },keys.gui.global.windowDimensions);
 
@@ -249,8 +248,8 @@ const MapHolder=function(){
     this._lastSequenceQuery=0;
 
 
-    globalStore.storeData(keys.map.courseUp,this.courseUp);
-    globalStore.storeData(keys.map.lockPosition,this.gpsLocked);
+    this.store.storeData(keys.map.courseUp,this.courseUp);
+    this.store.storeData(keys.map.lockPosition,this.gpsLocked);
     this.timer=undefined;
     KeyHandler.registerHandler(()=>{self.changeZoom(+1)},"map","zoomIn");
     KeyHandler.registerHandler(()=>{self.changeZoom(-1)},"map","zoomOut");
@@ -308,6 +307,12 @@ const MapHolder=function(){
      * @type {*[]}
      */
     this.eventGuards=[];
+    this.lastMapClick=undefined;
+    this.registerEventGuard((name)=>{
+        if (name === 'click'){
+            this.lastMapClick=(new Date()).getTime();
+        }
+    });
 
     /**
      * pepjs polyfill handling for converting touch events to pointer events
@@ -358,7 +363,7 @@ MapHolder.prototype.updateStoreKeys=function(newKeys,page,name){
             });
         }
     }
-    globalStore.register(this.navChanged,this.storeKeys.concat(addKeys));
+    this.store.register(this.navChanged,this.storeKeys.concat(addKeys));
 }
 MapHolder.prototype.EventTypes=EventTypes;
 
@@ -436,7 +441,7 @@ MapHolder.prototype.userAction=function(){
 }
 MapHolder.prototype.isInUserActionGuard=function(){
     let now=(new Date()).getTime();
-    return now <= (this.lastUserAction + globalStore.getData(keys.properties.remoteGuardTime,2)*1000);
+    return now <= (this.lastUserAction + this.store.getData(keys.properties.remoteGuardTime,2)*1000);
 }
 /**
  * render the map to a new div
@@ -477,7 +482,7 @@ MapHolder.prototype.renderTo=function(div){
                 this.evDispatcher.register(document.querySelectorAll('.map')[0]);
             }
         }
-        let baseVisible=globalStore.getData(keys.properties.layers.base,false);
+        let baseVisible=this.store.getData(keys.properties.layers.base,false);
         this.olmap.getLayers().forEach((layer)=>{
             if (layer.avnavOptions && layer.avnavOptions.isBase){
                 layer.setVisible(baseVisible);
@@ -502,7 +507,7 @@ MapHolder.prototype.setChartEntry=function(entry,opt_noRemote){
     //set the new base chart
     this._baseChart=this.createChartSource(assign({},entry,{type:'chart',enabled:true,baseChart:true}));
     try{
-        localStorage.setItem(globalStore.getData(keys.properties.chartDataName),this._baseChart.getChartKey());
+        localStorage.setItem(this.store.getData(keys.properties.chartDataName),this._baseChart.getChartKey());
     }catch(e){}
     if (! opt_noRemote){
         try {
@@ -514,7 +519,7 @@ MapHolder.prototype.setChartEntry=function(entry,opt_noRemote){
 MapHolder.prototype.getLastChartKey=function (){
     let rt;
     try{
-        rt=localStorage.getItem(globalStore.getData(keys.properties.chartDataName));
+        rt=localStorage.getItem(this.store.getData(keys.properties.chartDataName));
         return rt;
     }catch (e){}
 }
@@ -656,7 +661,7 @@ MapHolder.prototype.loadMap=function(div){
             resolve(0);
         };
         let newSources=[];
-        if (! globalStore.getData(keys.gui.capabilities.uploadOverlays)){
+        if (! this.store.getData(keys.gui.capabilities.uploadOverlays)){
             this.overlayConfig=new OverlayConfig();
             this.overlayOverrides=this.overlayConfig.copy();
             newSources.push(chartSource);
@@ -828,12 +833,12 @@ MapHolder.prototype.updateStateControl=function() {
         this.scaleControl=undefined;
     }
     let controls=[];
-    if (globalStore.getData(keys.properties.layers.scale,false)){
+    if (this.store.getData(keys.properties.layers.scale,false)){
         this.scaleControl=new olScaleLine({
                 units: 'nautical',
                 steps: 4,
                 bar: true,
-                text: globalStore.getData(keys.properties.mapScaleBarText,true),
+                text: this.store.getData(keys.properties.mapScaleBarText,true),
                 minWidth: 140
             }
         );
@@ -884,7 +889,7 @@ MapHolder.prototype.initMap=function(){
     });
     layers.push(avnavRenderLayer);
     this.mapMinZoom=this.minzoom;
-    let hasBaseLayers=globalStore.getData(keys.properties.layers.base,true);
+    let hasBaseLayers=this.store.getData(keys.properties.layers.base,true);
     if (hasBaseLayers) {
         this.minzoom = 2;
     }
@@ -989,13 +994,13 @@ MapHolder.prototype.initMap=function(){
         view=this.getView();
         view.setCenter(this.pointToMap(this.center));
         if (this.zoom < this.minzoom) this.zoom=this.minzoom;
-        if (this.zoom > (this.maxzoom + globalStore.getData(keys.properties.maxUpscale)))
-            this.zoom=this.maxzoom+globalStore.getData(keys.properties.maxUpscale);
+        if (this.zoom > (this.maxzoom + this.store.getData(keys.properties.maxUpscale)))
+            this.zoom=this.maxzoom+this.store.getData(keys.properties.maxUpscale);
         let slideLevels=0;
-        if (globalStore.getData(keys.properties.mapUpZoom) < globalStore.getData(keys.properties.slideLevels)){
+        if (this.store.getData(keys.properties.mapUpZoom) < this.store.getData(keys.properties.slideLevels)){
             //TODO: pick the right maxUpZoom depending on the chart
             //but should be good enough as online maps should have all levels
-            slideLevels=globalStore.getData(keys.properties.slideLevels)-globalStore.getData(keys.properties.mapUpZoom);
+            slideLevels=this.store.getData(keys.properties.slideLevels)-this.store.getData(keys.properties.mapUpZoom);
         }
         if (slideLevels > 0) {
             if (this.zoom >= (this.minzoom + slideLevels)) {
@@ -1040,19 +1045,19 @@ MapHolder.prototype.initMap=function(){
     this.saveCenter();
     let newCenter= this.pointFromMap(this.getView().getCenter());
     this.setCenterFromMove(newCenter,true);
-    if (! globalStore.getData(keys.properties.layers.boat) ) this.gpsLocked=false;
-    globalStore.storeData(keys.map.lockPosition,this.gpsLocked);
+    if (! this.store.getData(keys.properties.layers.boat) ) this.gpsLocked=false;
+    this.store.storeData(keys.map.lockPosition,this.gpsLocked);
 };
 
 MapHolder.prototype.timerFunction=function(){
     let xzoom=this.getZoom();
-    globalStore.storeMultiple(xzoom,{
+    this.store.storeMultiple(xzoom,{
         required:keys.map.requiredZoom,
         current:keys.map.currentZoom
     });
     let self=this;
     let now=(new Date()).getTime();
-    if (this._lastSequenceQuery < (now - globalStore.getData(keys.properties.mapSequenceTime,5000))){
+    if (this._lastSequenceQuery < (now - this.store.getData(keys.properties.mapSequenceTime,5000))){
         this._lastSequenceQuery=now;
         if (this.sources.length > 0 && this._lastMapDiv) {
             for (let k in this.sources){
@@ -1077,8 +1082,8 @@ MapHolder.prototype.changeZoom=function(number,opt_force,opt_noUserAction){
     let curzoom=this.requiredZoom; //this.getView().getZoom();
     curzoom+=number;
     if (curzoom < this.minzoom ) curzoom=this.minzoom;
-    if (curzoom > (this.maxzoom+globalStore.getData(keys.properties.maxUpscale)) ) {
-        curzoom=this.maxzoom+globalStore.getData(keys.properties.maxUpscale);
+    if (curzoom > (this.maxzoom+this.store.getData(keys.properties.maxUpscale)) ) {
+        curzoom=this.maxzoom+this.store.getData(keys.properties.maxUpscale);
     }
     this.requiredZoom=curzoom;
     this.forceZoom=opt_force||false;
@@ -1105,7 +1110,7 @@ MapHolder.prototype.setZoom=function(newZoom){
  * @private
  */
 MapHolder.prototype.drawGrid=function() {
-    if (!globalStore.getData(keys.properties.layers.grid)) return;
+    if (!this.store.getData(keys.properties.layers.grid)) return;
     if (!this.olmap) return;
     let style = {
         width: 1,
@@ -1160,7 +1165,7 @@ MapHolder.prototype.drawGrid=function() {
  * @private
  */
 MapHolder.prototype.drawNorth=function() {
-    if (!globalStore.getData(keys.properties.layers.compass)) return;
+    if (!this.store.getData(keys.properties.layers.compass)) return;
     if (!this.olmap) return;
     this.drawing.drawImageToContext([0,0],this.northImage, {
         fixX: 45, //this.drawing.getContext().canvas.width-120,
@@ -1226,11 +1231,11 @@ MapHolder.prototype.setBoatOffset=function(point){
  */
 MapHolder.prototype.navEvent = function () {
 
-    let gps = globalStore.getMultiple(keys.nav.gps);
+    let gps = this.store.getMultiple(keys.nav.gps);
     if (gps.valid) {
         if (this.gpsLocked) {
             if (this.courseUp) {
-                let mapDirection = globalStore.getData(keys.nav.display.mapDirection);
+                let mapDirection = this.store.getData(keys.nav.display.mapDirection);
                 this.setMapRotation(mapDirection);
             }
             this.setCenter(gps, true, this.getBoatOffset());
@@ -1242,13 +1247,13 @@ MapHolder.prototype.navEvent = function () {
 };
 
 MapHolder.prototype.centerToGps=function(){
-    if (! globalStore.getData(keys.nav.gps.valid)) return;
-    let gps=globalStore.getData(keys.nav.gps.position);
+    if (! this.store.getData(keys.nav.gps.valid)) return;
+    let gps=this.store.getData(keys.nav.gps.position);
     this.setCenter(gps);
 };
 
 MapHolder.prototype.checkAutoZoom=function(opt_force){
-    let enabled= globalStore.getData(keys.properties.autoZoom)||opt_force;
+    let enabled= this.store.getData(keys.properties.autoZoom)||opt_force;
     if (this.forceZoom) enabled=false;
     if (! this.olmap) return;
     if (! enabled ||  !(this.gpsLocked||opt_force)) {
@@ -1352,7 +1357,7 @@ MapHolder.prototype.setCenter=function(point,opt_noUserAction,opt_offset){
     if (! opt_noUserAction) this.userAction();
     if (this.gpsLocked){
         let p=navobjects.WayPoint.fromPlain(point);
-        globalStore.storeData(keys.map.centerPosition,p);
+        this.store.storeData(keys.map.centerPosition,p);
     }
     if (! this.getView()) return;
     let coordinates=this.pointToMap([point.lon,point.lat]);
@@ -1407,7 +1412,7 @@ MapHolder.prototype.setMapRotation=function(rotation){
     if (rotation === undefined) return;
     this.getView().setRotation(rotation==0?0:(360-rotation)*Math.PI/180);
     if (this.gpsLocked){
-        let boat=globalStore.getData(keys.map.centerPosition);
+        let boat=this.store.getData(keys.map.centerPosition);
         if (boat) {
             this.setCenter(boat,true,this.getBoatOffset());
         }
@@ -1439,17 +1444,17 @@ MapHolder.prototype.setCourseUp=function(on,opt_noRemote){
     let old=this.courseUp;
     if (old === on) return on;
     if (on){
-        let direction=globalStore.getData(keys.nav.display.mapDirection);
+        let direction=this.store.getData(keys.nav.display.mapDirection);
         if (direction !== undefined) {
             this.setMapRotation(direction);
             this.courseUp = on;
-            globalStore.storeData(keys.map.courseUp, on);
+            this.store.storeData(keys.map.courseUp, on);
         }
         return on;
     }
     else{
         this.courseUp=on;
-        globalStore.storeData(keys.map.courseUp,on);
+        this.store.storeData(keys.map.courseUp,on);
         this.setMapRotation(0);
 
     }
@@ -1460,13 +1465,13 @@ MapHolder.prototype.setGpsLock=function(lock,opt_noRemote){
         remotechannel.sendMessage(COMMANDS.lock,lock?'true':'false');
     }
     if (lock === this.gpsLocked) return;
-    if (lock) globalStore.storeData(keys.map.measurePosition,undefined);
-    if (! globalStore.getData(keys.nav.gps.valid) && lock) return;
+    if (lock) this.store.storeData(keys.map.measurePosition,undefined);
+    if (! this.store.getData(keys.nav.gps.valid) && lock) return;
     //we do not lock if the nav layer is not visible
-    if (! globalStore.getData(keys.properties.layers.boat) && lock) return;
+    if (! this.store.getData(keys.properties.layers.boat) && lock) return;
     this.gpsLocked=lock;
-    globalStore.storeData(keys.map.lockPosition,lock);
-    if (lock) this.setCenter(globalStore.getData(keys.nav.gps.position),opt_noRemote,this.getBoatOffset());
+    this.store.storeData(keys.map.lockPosition,lock);
+    if (lock) this.setCenter(this.store.getData(keys.nav.gps.position),opt_noRemote,this.getBoatOffset());
     this.checkAutoZoom();
 };
 
@@ -1487,7 +1492,7 @@ MapHolder.prototype.onClick=function(evt){
         let rt=this._callHandlers({type:EventTypes.SELECTAIS,aisparam:aisparam});
         if (rt) return false;
     }
-    if (! globalStore.getData(keys.properties.featureInfo,true)) return true;
+    if (! this.store.getData(keys.properties.featureInfo,true)) return true;
     //if we have a route point we will treat this as a feature info if not handled directly
     if (wp){
         let feature = {
@@ -1529,7 +1534,7 @@ MapHolder.prototype.onClick=function(evt){
     let detectedFeatures=[];
     const callForTop=(topFeature)=>{
         if (! topFeature){
-            if (globalStore.getData(keys.properties.emptyFeatureInfo)){
+            if (this.store.getData(keys.properties.emptyFeatureInfo)){
                 let baseChart=this.getBaseChart();
                 if (!baseChart) return;
                 let coordinates=this.transformFromMap(this.pixelToCoord(evt.pixel));
@@ -1555,7 +1560,7 @@ MapHolder.prototype.onClick=function(evt){
         detectedFeatures.push({feature:feature,layer:layer,source:layer.avnavOptions.chartSource});
         },
         {
-            hitTolerance: globalStore.getData(keys.properties.clickTolerance)/2
+            hitTolerance: this.store.getData(keys.properties.clickTolerance)/2
         });
     //sort the detected features by the order of our sources so that we use the topmost
     let topFeature;
@@ -1649,8 +1654,8 @@ MapHolder.prototype.onZoomChange=function(evt){
         let vZoom=this.getView().getZoom();
         if (vZoom != this.mapZoom){
             if (vZoom < this.minzoom) vZoom=this.minzoom;
-            if (vZoom > (this.maxzoom+globalStore.getData(keys.properties.maxUpscale)) ) {
-                vZoom=this.maxzoom+globalStore.getData(keys.properties.maxUpscale);
+            if (vZoom > (this.maxzoom+this.store.getData(keys.properties.maxUpscale)) ) {
+                vZoom=this.maxzoom+this.store.getData(keys.properties.maxUpscale);
             }
             base.log("zoom required from map: " + vZoom);
             this.requiredZoom = vZoom;
@@ -1729,7 +1734,7 @@ MapHolder.prototype.setCenterFromMove=function(newCenter,force){
         //we avoid some heavy redrawing when we move/zoom in locked
         //mode
         //instead we already set the position directly from the gps
-        globalStore.storeData(keys.map.centerPosition,p);
+        this.store.storeData(keys.map.centerPosition,p);
         if (this.isInUserActionGuard()) {
             this.remoteChannel.sendMessage(COMMANDS.setCenter + " " + JSON.stringify({lat: p.lat, lon: p.lon}));
         }
@@ -1778,7 +1783,7 @@ MapHolder.prototype.doSlide=function(start){
         this.slideIn = start;
     }
     let self=this;
-    let to=globalStore.getData(keys.properties.slideTime);
+    let to=this.store.getData(keys.properties.slideTime);
     window.setTimeout(function(){
         self.doSlide();
     },to);
@@ -1803,7 +1808,7 @@ MapHolder.prototype.triggerRender=function(){
  */
 MapHolder.prototype.saveCenter=function(){
     let raw=JSON.stringify({center:this.center,zoom:this.zoom,requiredZoom: this.requiredZoom});
-    localStorage.setItem(globalStore.getData(keys.properties.centerName),raw);
+    localStorage.setItem(this.store.getData(keys.properties.centerName),raw);
 };
 
 /**
@@ -1879,5 +1884,14 @@ MapHolder.prototype.unregisterPageWidgets=function(page){
     this.updateStoreKeys();
 }
 
+MapHolder.prototype.shouldBlock=function(){
+    let timeDiff=this.store.getData(keys.properties.mapClickWorkaroundTime, 300);
+    if (this.lastMapClick === undefined) return false;
+    return this.lastMapClick > ((new Date()).getTime()-timeDiff);
+}
 
-export default new MapHolder();
+MapHolder.prototype.getStore=function(){
+    return this.store;
+}
+
+export default MapHolder;

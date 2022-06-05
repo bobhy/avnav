@@ -11,7 +11,6 @@ import routeobjects from '../nav/routeobjects.js';
 import OverlayDialog, {dialogHelper, InfoItem} from '../components/OverlayDialog.jsx';
 import Helper from '../util/helper.js';
 import GuiHelpers from '../util/GuiHelpers.js';
-import MapHolder from '../map/mapholder.js';
 import navobjects from '../nav/navobjects.js';
 import WayPointDialog from '../components/WaypointDialog.jsx';
 import ButtonList from '../components/ButtonList.jsx';
@@ -22,10 +21,10 @@ import EditPageDialog from '../components/EditPageDialog.jsx';
 import LayoutHandler from '../util/layouthandler.js';
 import Mob from '../components/Mob.js';
 import FeatureInfoDialog from "../components/FeatureInfoDialog";
-import mapholder from "../map/mapholder.js";
 import {Input, InputSelect} from "../components/Inputs";
 import DB from '../components/DialogButton';
 import Formatter from "../util/formatter";
+import Dynamic from "../hoc/Dynamic";
 
 const RouteHandler=NavHandler.getRoutingHandler();
 const PAGENAME="editroutepage";
@@ -389,7 +388,7 @@ class EditRoutePage extends React.Component{
                 let lastSelected=currentEditor.getIndex();
                 currentEditor.setNewIndex(data.idx);
                 let last=this.state.lastCenteredWp;
-                MapHolder.setCenter(currentEditor.getPointAt());
+                this.props.pageContext.getMapHolder().setCenter(currentEditor.getPointAt());
                 this.setState({lastCenteredWp:data.idx});
                 if (lastSelected == data.idx && last == data.idx){
                     startWaypointDialog(data,data.idx);
@@ -401,7 +400,7 @@ class EditRoutePage extends React.Component{
         if (panel == 'bottomRight'){
             if (! store.getData(keys.nav.gps.valid)) return;
             let boatPos=store.getData(keys.nav.gps.position);
-            MapHolder.setCenter(boatPos);
+            this.props.pageContext.getMapHolder().setCenter(boatPos);
             return;
         }
         if (panel == 'bottomLeft'){
@@ -418,7 +417,7 @@ class EditRoutePage extends React.Component{
                 onClick:()=>{
                     self.wpTimer.startTimer();
                     let currentEditor=getCurrentEditor();
-                    MapHolder.setCenter(currentEditor.getPointAt());
+                    this.props.pageContext.getMapHolder().setCenter(currentEditor.getPointAt());
                     this.setState({lastCenteredWp:currentEditor.getIndex()});
                 }
             },
@@ -440,7 +439,7 @@ class EditRoutePage extends React.Component{
                     self.wpTimer.startTimer();
                     let currentEditor=getCurrentEditor();
                     currentEditor.moveIndex(1);
-                    MapHolder.setCenter(currentEditor.getPointAt());
+                    this.props.pageContext.getMapHolder().setCenter(currentEditor.getPointAt());
                     this.setState({lastCenteredWp:currentEditor.getIndex()});
                 }
             },
@@ -454,7 +453,7 @@ class EditRoutePage extends React.Component{
                     self.wpTimer.startTimer();
                     let currentEditor=getCurrentEditor();
                     currentEditor.moveIndex(-1);
-                    MapHolder.setCenter(currentEditor.getPointAt());
+                    this.props.pageContext.getMapHolder().setCenter(currentEditor.getPointAt());
                     this.setState({lastCenteredWp:currentEditor.getIndex()});
                 }
             }
@@ -510,24 +509,24 @@ class EditRoutePage extends React.Component{
     mapEvent(evdata){
         console.log("mapevent: "+evdata.type);
         let currentEditor = getCurrentEditor();
-        if (evdata.type === MapHolder.EventTypes.LOAD || evdata.type === MapHolder.EventTypes.RELOAD){
+        if (evdata.type === this.props.pageContext.getMapHolder().EventTypes.LOAD || evdata.type === this.props.pageContext.getMapHolder().EventTypes.RELOAD){
             if (this.hasCentered) return true;
             if (this.props.options && this.props.options.center){
                 if (editor.hasRoute()){
                     let wp=editor.getPointAt();
                     if (wp){
                         this.state.lastCenteredWp=wp;
-                        mapholder.setCenter(wp);
+                        this.props.pageContext.getMapHolder().setCenter(wp);
                     }
                 }
             }
             this.hasCentered=true;
         }
-        if (evdata.type === MapHolder.EventTypes.SELECTWP) {
+        if (evdata.type === this.props.pageContext.getMapHolder().EventTypes.SELECTWP) {
             currentEditor.setNewIndex(currentEditor.getIndexFromPoint(evdata.wp));
             return true;
         }
-        if (evdata.type === MapHolder.EventTypes.FEATURE){
+        if (evdata.type === this.props.pageContext.getMapHolder().EventTypes.FEATURE){
             let feature=evdata.feature;
             if (! feature) return;
             if (feature.nextTarget && this.checkRouteWritable(true)){
@@ -539,7 +538,7 @@ class EditRoutePage extends React.Component{
                                 feature.nextTarget[1],
                                 feature.name
                             )
-                            MapHolder.setCenter(target);
+                            this.props.pageContext.getMapHolder().setCenter(target);
                             currentEditor.addWaypoint(target,true);
                             this.setState({lastCenteredWp:currentEditor.getIndex()});
                         }},
@@ -550,7 +549,7 @@ class EditRoutePage extends React.Component{
                             feature.nextTarget[1],
                             feature.name
                         )
-                        MapHolder.setCenter(target);
+                        this.props.pageContext.getMapHolder().setCenter(target);
                         currentEditor.addWaypoint(target);
                         this.setState({lastCenteredWp:currentEditor.getIndex()});
                         }},
@@ -561,7 +560,7 @@ class EditRoutePage extends React.Component{
                                 feature.nextTarget[1],
                                 feature.name
                             )
-                            MapHolder.setCenter(target);
+                            this.props.pageContext.getMapHolder().setCenter(target);
                             currentEditor.changeSelectedWaypoint(target);
                             this.setState({lastCenteredWp:currentEditor.getIndex()});
                         }}
@@ -597,36 +596,36 @@ class EditRoutePage extends React.Component{
 
     }
     componentWillUnmount(){
-        MapHolder.setRoutingActive(false);
-        MapHolder.setGpsLock(this.lastGpsLock,true);
+        this.props.pageContext.getMapHolder().setRoutingActive(false);
+        this.props.pageContext.getMapHolder().setGpsLock(this.lastGpsLock,true);
         RouteHandler.unsetCurrentRoutePage(PAGENAME);
     }
     componentDidMount(){
-        MapHolder.setRoutingActive(true);
-        MapHolder.showEditingRoute(true);
-        this.lastGpsLock=MapHolder.getGpsLock();
-        MapHolder.setGpsLock(false);
+        this.props.pageContext.getMapHolder().setRoutingActive(true);
+        this.props.pageContext.getMapHolder().showEditingRoute(true);
+        this.lastGpsLock=this.props.pageContext.getMapHolder().getGpsLock();
+        this.props.pageContext.getMapHolder().setGpsLock(false);
     }
     getButtons(){
         let rt=[
             {
                 name: "ZoomIn",
-                onClick:()=>{MapHolder.changeZoom(1)}
+                onClick:()=>{this.props.pageContext.getMapHolder().changeZoom(1)}
             },
             {
                 name: "ZoomOut",
-                onClick:()=>{MapHolder.changeZoom(-1)}
+                onClick:()=>{this.props.pageContext.getMapHolder().changeZoom(-1)}
             },
             {
                 name:"NavAddAfter",
                 onClick:()=>{
                     if (!this.checkRouteWritable()) return;
-                    let center=MapHolder.getCenter();
+                    let center=this.props.pageContext.getMapHolder().getCenter();
                     if (!center) return;
                     let currentEditor=getCurrentEditor();
                     let current=currentEditor.getPointAt();
                     if (current){
-                        let distance=MapHolder.pixelDistance(center,current);
+                        let distance=this.props.pageContext.getMapHolder().pixelDistance(center,current);
                         if (distance < 8) return;
                     }
                     currentEditor.addWaypoint(center);
@@ -638,12 +637,12 @@ class EditRoutePage extends React.Component{
                 name:"NavAdd",
                 onClick:()=>{
                     if (! this.checkRouteWritable()) return;
-                    let center=MapHolder.getCenter();
+                    let center=this.props.pageContext.getMapHolder().getCenter();
                     if (!center) return;
                     let currentEditor=getCurrentEditor();
                     let current=currentEditor.getPointAt();
                     if (current){
-                        let distance=MapHolder.pixelDistance(center,current);
+                        let distance=this.props.pageContext.getMapHolder().pixelDistance(center,current);
                         if (distance < 8) return;
                     }
                     currentEditor.addWaypoint(center,true);
@@ -659,7 +658,7 @@ class EditRoutePage extends React.Component{
                     let newIndex=getCurrentEditor().getIndex();
                     let currentPoint=getCurrentEditor().getPointAt(newIndex);
                     if (currentPoint) {
-                        MapHolder.setCenter(currentPoint);
+                        this.props.pageContext.getMapHolder().setCenter(currentPoint);
                         this.setState({lastCenteredWp:newIndex});
                     }
                 },
@@ -669,7 +668,7 @@ class EditRoutePage extends React.Component{
                 name:"NavToCenter",
                 onClick:()=>{
                     if (! this.checkRouteWritable()) return;
-                    let center=MapHolder.getCenter();
+                    let center=this.props.pageContext.getMapHolder().getCenter();
                     if (!center) return;
                     let currentEditor=getCurrentEditor();
                     currentEditor.changeSelectedWaypoint(center);
@@ -708,12 +707,14 @@ class EditRoutePage extends React.Component{
         return rt;
     }
     render(){
+        let Buttons=Dynamic(ButtonList,this.props.pageContext.getStore(),
+            ButtonList.storeKeys);
         let self=this;
         let store=this.props.pageContext.getStore();
         let isSmall=(this.state.dimensions||{width:0}).width
             < store.getData(keys.properties.smallBreak);
         let overlayContent=(isSmall || this.state.showWpButtons)?
-            <ButtonList
+            <Buttons
                 itemList={this.getWaypointButtons()}
                 className="overlayContainer"
             />

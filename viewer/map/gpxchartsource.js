@@ -31,10 +31,7 @@ import {Vector as olVectorLayer} from 'ol/layer';
 import {LineString as olLineString, MultiLineString as olMultiLineString, Point as olPoint} from 'ol/geom';
 import {GPX as olGPXFormat} from 'ol/format';
 import Helper from "../util/helper";
-import globalstore from "../util/globalstore";
 import keys from "../util/keys";
-import {assign} from "ol/obj";
-import featureFormatter from "../util/featureFormatter";
 
 export const stylePrefix="style."; // the prefix for style attributes
 
@@ -151,7 +148,7 @@ class GpxChartSource extends ChartSourceBase{
                 fill: new olFill({
                         color: this.styles.LineString.getStroke().getColor()
                     }),
-                radius: globalstore.getData(keys.properties.routeWpSize)
+                radius: this.mapholder.getStore().getData(keys.properties.routeWpSize)
             })
         });
     }

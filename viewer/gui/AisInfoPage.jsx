@@ -10,7 +10,6 @@ import React from 'react';
 import Page from '../components/Page.jsx';
 import AisHandler from '../nav/aisdata.js';
 import AisFormatter from '../nav/aisformatter.jsx';
-import MapHolder from '../map/mapholder.js';
 import GuiHelpers from '../util/GuiHelpers.js';
 import Mob from '../components/Mob.js';
 import {Drawing} from '../map/drawing.js';
@@ -45,7 +44,7 @@ const createUpdateFunction=(config,mmsi)=>{
 const storeKeys={
     aisSequence:keys.nav.ais.updateCount
 };
-const createItem=(config,mmsi)=>{
+const createItem=(store,config,mmsi)=>{
     let cl="aisData";
     if (config.addClass)cl+=" "+config.addClass;
     return Dynamic((props)=> {
@@ -55,7 +54,7 @@ const createItem=(config,mmsi)=>{
             <div className={cl}>{AisFormatter.format(props.name, props.current)}</div>
         </div>
         );
-    },{
+    },store,{
         storeKeys:storeKeys,
         updateFunction:createUpdateFunction(config,mmsi)
 
@@ -72,7 +71,7 @@ class AisInfoPage extends React.Component{
                 onClick:()=>{
                     AisHandler.setTrackedTarget(0);
                     let pos=AisHandler.getAisPositionByMmsi(AisHandler.getTrackedTarget());
-                    if (pos) MapHolder.setCenter(pos);
+                    if (pos) this.props.pageContext.getMapHolder().setCenter(pos);
                     self.props.history.pop();
                 }
             },
@@ -83,8 +82,8 @@ class AisInfoPage extends React.Component{
                     AisData.setTrackedTarget(self.props.options.mmsi);
                     let pos=AisHandler.getAisPositionByMmsi(self.props.options.mmsi);
                     if (pos) {
-                        MapHolder.setCenter(pos);
-                        MapHolder.setGpsLock(false);
+                        this.props.pageContext.getMapHolder().setCenter(pos);
+                        this.props.pageContext.getMapHolder().setGpsLock(false);
                     }
                     self.props.history.pop();
                 }
@@ -131,7 +130,7 @@ class AisInfoPage extends React.Component{
         let rect=canvas.getBoundingClientRect();
         canvas.width=rect.width;
         canvas.height=rect.height;
-        MapHolder.aislayer.drawTargetSymbol(
+        this.props.pageContext.getMapHolder().aislayer.drawTargetSymbol(
             drawing,
             [rect.width/2,rect.height/2],
             current,
@@ -149,7 +148,7 @@ class AisInfoPage extends React.Component{
         const Status = function (props) {
             return <canvas className="status" ref={(ctx)=>{self.drawIcon(ctx,props.current)}}/>
         };
-        const RenderStatus=Dynamic(Status);
+        const RenderStatus=Dynamic(Status, this.props.pageContext.getStore());
         //gets mmsi
         const MainContent=(props)=> {
             return(
@@ -159,7 +158,8 @@ class AisInfoPage extends React.Component{
                     updateFunction={createUpdateFunction({},props.mmsi)}
                     />
                 <GuardedList
-                    itemCreator={(config)=>{return createItem(config,props.mmsi)}}
+                    itemCreator={(config)=>{return createItem(this.props.pageContext.getStore(),
+                        config,props.mmsi)}}
                     itemList={displayItems}
                     scrollable={true}
                     className="infoList"

@@ -11,6 +11,7 @@ import AlarmHandler from '../nav/alarmhandler.js';
 import Dynamic from '../hoc/Dynamic.jsx';
 import GuiHelpers from "../util/GuiHelpers";
 import assign from 'object-assign';
+import {hasActiveInputs} from "../hoc/InputMonitor";
 
 const alarmClick =function(){
     let alarms=globalStore.getData(keys.nav.alarms.all,"");
@@ -20,20 +21,7 @@ const alarmClick =function(){
         AlarmHandler.stopAlarm(k);
     }
 };
-const ButtonShade=Dynamic((props)=>{
-    let {buttonWidth,showShade,...forward}=props;
-    let style={
-        width: buttonWidth
-    };
-    let className="buttonShade";
-    if (showShade) className+=" shade";
-    return <div className={className} style={style} {...forward}/>;
-},{
-    storeKeys:{
-        buttonWidth: keys.gui.global.computedButtonWidth,
-        showShade: keys.properties.showButtonShade
-    }
-});
+
 class Page extends React.Component {
     constructor(props){
         super(props);
@@ -54,7 +42,7 @@ class Page extends React.Component {
     timerCallback(sequence){
         if (this.props.autoHideButtons !== undefined){
             let now=(new Date()).getTime();
-            if (globalStore.getData(keys.gui.global.hasActiveInputs)){
+            if (hasActiveInputs()){
                 this.lastUserAction=now;
             }
             if (! this.state.hideButtons) {
@@ -75,7 +63,26 @@ class Page extends React.Component {
             },1);
         }
     }
+    ButtonShade(){
+        return Dynamic((props)=>{
+            let {buttonWidth,showShade,...forward}=props;
+            let style={
+                width: buttonWidth
+            };
+            let className="buttonShade";
+            if (showShade) className+=" shade";
+            return <div className={className} style={style} {...forward}/>;
+        },this.props.pageContext.getStore(),{
+            storeKeys:{
+                buttonWidth: keys.gui.global.computedButtonWidth,
+                showShade: keys.properties.showButtonShade
+            }
+        });
+    }
     render() {
+        let Buttons=Dynamic(ButtonList,this.props.pageContext.getStore(),
+            {storeKeys:ButtonList.storeKeys});
+        let Shade=this.ButtonShade();
         let props=this.props;
         let className = "page";
         let hideButtons=this.state.hideButtons && props.autoHideButtons;
@@ -97,8 +104,8 @@ class Page extends React.Component {
                 {props.bottomContent ? props.bottomContent : null}
                 <Alarm onClick={alarmClick}/>
             </div>
-            {! hideButtons && <ButtonList itemList={props.buttonList} widthChanged={props.buttonWidthChanged}/>}
-            { hideButtons && <ButtonShade onClick={
+            {! hideButtons && <Buttons itemList={props.buttonList} widthChanged={props.buttonWidthChanged}/>}
+            { hideButtons && <Shade onClick={
                 (ev)=>{
                     ev.stopPropagation();
                     ev.preventDefault();

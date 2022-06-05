@@ -2,9 +2,7 @@
  * Created by andreas on 18.05.14.
  */
 
-import keys from '../util/keys.jsx';
-import globalStore from '../util/globalstore.jsx';
-
+import keys, {KeyHelper} from '../util/keys.jsx';
 
 
 class Callback{
@@ -32,7 +30,7 @@ const TrackLayer=function(mapholder){
      * @private
      * @type {boolean}
      */
-    this.visible=globalStore.getData(keys.properties.layers.track);
+    this.visible=this.mapholder.getStore().getData(keys.properties.layers.track);
 
     /**
      * the list of track points
@@ -52,11 +50,11 @@ const TrackLayer=function(mapholder){
     this.setStyle();
 
     let self=this;
-    globalStore.register(this,keys.gui.global.propertySequence);
+    this.mapholder.getStore().register(this,keys.gui.global.propertySequence);
     this.newTrackCallback=new Callback((keys)=>{
         self.navEvent();
     });
-    globalStore.register(this.newTrackCallback,keys.nav.track);
+    this.mapholder.getStore().register(this.newTrackCallback,keys.nav.track.currentTrack);
 
 
 };
@@ -66,8 +64,8 @@ const TrackLayer=function(mapholder){
  */
 TrackLayer.prototype.setStyle=function() {
     this.lineStyle = {
-            color: globalStore.getData(keys.properties.trackColor),
-            width: globalStore.getData(keys.properties.trackWidth)
+            color: this.mapholder.getStore().getData(keys.properties.trackColor),
+            width: this.mapholder.getStore().getData(keys.properties.trackWidth)
         }
 };
 
@@ -82,7 +80,7 @@ TrackLayer.prototype.navEvent = function () {
         return;
     }
 
-    let newTrack = globalStore.getData(keys.nav.track.currentTrack);
+    let newTrack = this.mapholder.getStore().getData(keys.nav.track.currentTrack);
     if (newTrack.length < 2) {
         this.currentTrack = [];
         this.trackPoints = [];
@@ -131,7 +129,7 @@ TrackLayer.prototype.onPostCompose=function(center,drawing){
     this.trackPixel=drawing.drawLineToContext(this.trackPoints,this.lineStyle);
 };
 TrackLayer.prototype.dataChanged=function() {
-    this.visible=globalStore.getData(keys.properties.layers.track);
+    this.visible=this.mapholder.getStore().getData(keys.properties.layers.track);
     this.setStyle();
     this.currentTrack=[]; //trigger a complete redraw
     this.trackPoints=[];
@@ -148,7 +146,7 @@ TrackLayer.prototype.setImageStyles=function(styles){
  */
 TrackLayer.prototype.findTarget=function(pixel){
     //TODO: own tolerance
-    let tolerance=globalStore.getData(keys.properties.clickTolerance)/2;
+    let tolerance=this.mapholder.getStore().getData(keys.properties.clickTolerance)/2;
     if (! this.trackPixel || ! this.trackPixel.length) return;
     let idx = this.mapholder.findTarget(pixel, this.trackPixel, tolerance);
     if (idx >= 0 && idx < this.trackPoints.length){

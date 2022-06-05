@@ -100,7 +100,7 @@ class AddressPage extends React.Component{
                   scrollable={true}
                   />
             );
-        });
+        }, this.props.pageContext.getStore());
 
         return (
             <Page

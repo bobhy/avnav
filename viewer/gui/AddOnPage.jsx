@@ -160,7 +160,7 @@ class AddOnPage extends React.Component{
                         }
                         buttonList={self.buildButtonList(self.state.addOns,props.activeAddOn||0)}/>
                 );
-            },{
+            },this.props.pageContext.getStore(),{
             storeKeys:{
                 activeAddOn:keys.gui.addonpage.activeAddOn,
                 }
